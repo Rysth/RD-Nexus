@@ -2,6 +2,15 @@ import { create } from "zustand";
 import api from "../utils/api";
 import type { Client, Project } from "./clientStore";
 
+// Helper type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
+
 // Types
 export interface QuoteItem {
   id?: number;
@@ -146,9 +155,9 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         },
         quotesLoading: false,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.error || "Error al cargar cotizaciones",
+        error: (error as ApiError).response?.data?.error || "Error al cargar cotizaciones",
         quotesLoading: false,
       });
       throw error;
@@ -160,9 +169,9 @@ export const useQuoteStore = create<QuoteState>((set) => ({
     try {
       const response = await api.get(`/api/v1/quotes/${id}`);
       set({ currentQuote: response.data, quotesLoading: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.error || "Error al cargar cotización",
+        error: (error as ApiError).response?.data?.error || "Error al cargar cotización",
         quotesLoading: false,
       });
       throw error;
@@ -178,9 +187,9 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         quotesLoading: false,
       }));
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.error || "Error al crear cotización",
+        error: (error as ApiError).response?.data?.error || "Error al crear cotización",
         quotesLoading: false,
       });
       throw error;
@@ -198,9 +207,9 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         quotesLoading: false,
       }));
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.error || "Error al actualizar cotización",
+        error: (error as ApiError).response?.data?.error || "Error al actualizar cotización",
         quotesLoading: false,
       });
       throw error;
@@ -216,9 +225,9 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         currentQuote: state.currentQuote?.id === id ? null : state.currentQuote,
         quotesLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.error || "Error al eliminar cotización",
+        error: (error as ApiError).response?.data?.error || "Error al eliminar cotización",
         quotesLoading: false,
       });
       throw error;
@@ -242,10 +251,10 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         quotesLoading: false,
       }));
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
         error:
-          error.response?.data?.error ||
+          (error as ApiError).response?.data?.error ||
           "Error al cambiar estado de cotización",
         quotesLoading: false,
       });
@@ -262,9 +271,9 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         quotesLoading: false,
       }));
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.error || "Error al duplicar cotización",
+        error: (error as ApiError).response?.data?.error || "Error al duplicar cotización",
         quotesLoading: false,
       });
       throw error;

@@ -97,7 +97,8 @@ export default function QuoteForm() {
   const [loadingProjects, setLoadingProjects] = useState(false);
 
   const form = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteFormSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(quoteFormSchema) as any,
     defaultValues: {
       client_id: 0,
       project_id: null,
