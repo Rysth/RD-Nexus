@@ -1,6 +1,12 @@
-# MicroBiz Stack
+# Nexus (by RysthDesign)
 
-Un stack completo con React (frontend) y AdonisJS API (backend) en un solo repositorio monorepo.
+Proyecto **100% personal** para administrar mis clientes, proyectos, servicios recurrentes, cotizaciones y facturación (incluyendo una base para futura facturación electrónica en Ecuador).
+
+Stack monorepo:
+- **Backend**: AdonisJS v6 (API) + Lucid ORM
+- **Frontend**: React + TypeScript + Vite
+- **Mobile**: Expo / React Native
+- **Infra local**: Docker + PostgreSQL + Redis + Mailpit
 
 ## 🚀 Inicio Rápido
 
@@ -12,8 +18,8 @@ Un stack completo con React (frontend) y AdonisJS API (backend) en un solo repos
 
 1. **Clona el repositorio:**
 ```bash
-git clone https://github.com/TuUsuario/MicroBiz-Stack.git
-cd MicroBiz-Stack
+git clone git@github.com:Rysth/RD-Nexus.git
+cd RD-Nexus
 ```
 
 2. **Ejecuta el script de configuración:**
@@ -31,10 +37,21 @@ El script automáticamente:
 - Backend (AdonisJS API): http://localhost:3333
 - Mailpit (Email testing): http://localhost:8025
 
+## 🎯 Objetivo del Proyecto
+
+Centralizar mi operación (RysthDesign) en un solo sistema:
+- Saber **quién es el cliente** y **qué software** le vendí
+- Automatizar **cobros recurrentes** (mensual/anual)
+- Crear **cotizaciones** con items y generar **PDF**
+- Convertir cotizaciones aprobadas en **facturas**
+- Ejecutar **recordatorios automáticos** por scheduler + email
+
+La prioridad es simple: que sea mantenible y útil para mí.
+
 ## 📁 Estructura del Proyecto
 
 ```
-MicroBiz-Stack/
+RD-Nexus/
 ├── client/                 # Frontend React + TypeScript + Vite
 │   ├── src/
 │   ├── Dockerfile
@@ -63,6 +80,137 @@ MicroBiz-Stack/
 ├── setup.sh                # Script de configuración
 └── README.md
 ```
+
+## 🧩 Roadmap Funcional (Módulos)
+
+### Módulo 1: Gestión de Clientes y Proyectos (La base)
+
+**Objetivo**: estructurar quién es el cliente y qué software se le vendió.
+
+**Entidades**
+- `clients`
+	- `id`
+	- `name` (nombre o razón social)
+	- `identification_type` (Ecuador: RUC=04, Cédula=05, Pasaporte=06)
+	- `identification` (RUC/Cédula)
+	- `email`
+	- `phone`
+	- `address`
+	- `created_at`, `updated_at`
+- `projects`
+	- `id`
+	- `client_id` (FK)
+	- `name` (ej: QuickInventory)
+	- `production_url`
+	- `start_date`
+	- `status` (enum: `active`, `maintenance`, `canceled`)
+	- `created_at`, `updated_at`
+
+**Relaciones (Lucid)**
+- Un `Client` **hasMany** `Project`
+- Un `Project` **belongsTo** `Client`
+
+### Módulo 2: Servicios Recurrentes (Automatización del cobro)
+
+**Objetivo**: definir qué se cobra mes a mes o anualmente por proyecto.
+
+**Entidad**: `recurring_services`
+- `id`
+- `project_id` (FK)
+- `name` (ej: “Mantenimiento Mensual”, “Hosting Anual”)
+- `amount` (precio)
+- `billing_cycle` (enum: `monthly`, `yearly`)
+- `next_billing_date`
+- `status` (enum: `active`, `paused`)
+- `created_at`, `updated_at`
+
+**API**
+- CRUD básico en controlador para gestionar servicios recurrentes de un proyecto.
+
+### Módulo 3: Cotizaciones (Upselling)
+
+**Objetivo**: cotizar mejoras/cambios por proyecto.
+
+**Entidades**
+- `quotes`
+	- `id`
+	- `project_id` (FK)
+	- `issue_date`
+	- `valid_until`
+	- `status` (enum: `draft`, `sent`, `approved`, `rejected`)
+	- `total`
+	- `created_at`, `updated_at`
+- `quote_items`
+	- `id`
+	- `quote_id` (FK)
+	- `description` (ej: “Módulo de reportes”)
+	- `quantity`
+	- `unit_price`
+	- `subtotal`
+	- `created_at`, `updated_at`
+
+**Lógica**
+- Método en controlador para crear una cotización con **items anidados** en una sola operación.
+
+**PDF**
+- Servicio backend que reciba una `quote` y genere un PDF simple con el logo de **RysthDesign** (librería sugerida: `pdfmake` o `puppeteer`).
+
+### Módulo 4: Facturación y Conversión
+
+**Objetivo**: facturar cotizaciones aprobadas y cobros recurrentes.
+
+**Entidad**: `invoices`
+- `id`
+- `project_id` (FK)
+- `number` (secuencial)
+- `issue_date`
+- `due_date`
+- `status` (enum: `pending`, `paid`, `voided`)
+- `total`
+- Preparación facturación electrónica (fase futura):
+	- `access_key` (clave de acceso SRI)
+	- `xml_content`
+- `created_at`, `updated_at`
+
+**Conversión (quote → invoice)**
+- Función que reciba el ID de una `quote` **aprobada** y genere una `invoice` copiando sus items.
+
+**Impuestos (RIMPE)**
+- IVA configurable, por defecto **0% / exento**.
+- Mantener una tabla separada `taxes` como base para cambios de régimen a futuro.
+
+### Módulo 5: Automatización y Cron Jobs (Recordatorios)
+
+**Objetivo**: evitar recordatorios manuales y generar facturas recurrentes.
+
+**Scheduler (AdonisJS)**
+- Usar `@adonisjs/scheduler`.
+
+**Job `BillingReminder`**
+- Se ejecuta todos los días a las **8:00 AM**.
+- Busca en `recurring_services` los registros donde `next_billing_date` sea **hoy** (o hoy + 3 días, según se configure).
+- Por cada servicio:
+	- Genera una nueva `invoice`.
+	- Envía correo al cliente usando **Adonis Mail**:
+		- “Hola [Cliente], tu factura por [Servicio] del proyecto [Proyecto] ya está generada por un valor de [Monto]”.
+	- Actualiza `next_billing_date` (+1 mes o +1 año según `billing_cycle`).
+
+## 🧱 Resumen Técnico (para mi yo desarrollador)
+
+### Backend (AdonisJS)
+- Lucid ORM para relaciones y consultas.
+- Adonis Mail para envíos (SMTP Gmail / Resend / Mailgun como opciones).
+- `@adonisjs/scheduler` para automatización diaria.
+
+### Frontend (React)
+- Dashboard: vista rápida de “Pagos pendientes este mes”.
+- Detalle de Proyecto: tabs para “Servicios Recurrentes”, “Historial de Cotizaciones”, “Facturas”.
+- En cotizaciones: botón “Convertir a Factura” que consume la API.
+
+### Facturación Electrónica (Ecuador) — fase futura
+- Mantener `identification_type` en clientes (RUC=04, Cédula=05, Pasaporte=06).
+- Reservar campos `access_key` y `xml_content` en facturas.
+- Tabla `taxes` para evolucionar la lógica tributaria si cambia el régimen.
 
 ## 🔧 Comandos Útiles
 
