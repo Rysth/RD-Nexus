@@ -10,10 +10,10 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 ## Milestone 0 — Base del proyecto (Infra + estándares)
 **Objetivo**: entorno estable para iterar rápido.
 
-- [ ] `.env` documentado (DB/Redis/Mail) y presente tras `./setup.sh`
-- [ ] `docker-compose.dev.yml` levanta todo sin pasos manuales extra
-- [ ] `./setup.sh` corre migraciones y seeds en dev sin fallar
-- [ ] Acceso OK: frontend 5173, backend 3333, Mailpit 8025
+- [x] `.env` documentado (DB/Redis/Mail) y presente tras `./setup.sh`
+- [x] `docker-compose.dev.yml` levanta todo sin pasos manuales extra
+- [x] `./setup.sh` corre migraciones y seeds en dev sin fallar
+- [x] Acceso OK: frontend 5173, backend 3333, Mailpit 8025
 
 ---
 
