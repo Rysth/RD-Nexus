@@ -10,8 +10,8 @@ const mailConfig = defineConfig({
    * Email
    */
   from: {
-    address: 'noreply@nexus.rysthdesign.com',
-    name: 'Nexus by RysthDesign',
+    address: env.get('SMTP_FROM_ADDRESS', 'support@rysthdesign.com'),
+    name: env.get('SMTP_FROM_NAME', 'Nexus by RysthDesign'),
   },
 
   /**
@@ -20,7 +20,7 @@ const mailConfig = defineConfig({
    * the Email
    */
   replyTo: {
-    address: 'support@nexus.rysthdesign.com',
+    address: env.get('SMTP_REPLY_TO', 'support@rysthdesign.com'),
     name: 'Nexus Support',
   },
 
@@ -28,20 +28,19 @@ const mailConfig = defineConfig({
    * The mailers object can be used to configure multiple mailers
    * each using a different transport or same transport with different
    * options.
+   * 
+   * Hostinger SMTP: smtp.hostinger.com:465 (SSL) or :587 (TLS)
    */
   mailers: {
     smtp: transports.smtp({
-      host: env.get('SMTP_HOST') || 'localhost',
-      port: Number(env.get('SMTP_PORT')) || 1025,
-      /**
-       * Uncomment the auth block if your SMTP
-       * server needs authentication
-       */
-      // auth: {
-      //   type: 'login',
-      //   user: env.get('SMTP_USERNAME'),
-      //   pass: env.get('SMTP_PASSWORD'),
-      // },
+      host: env.get('SMTP_HOST', 'smtp.hostinger.com'),
+      port: Number(env.get('SMTP_PORT', 465)),
+      secure: env.get('SMTP_SECURE', 'true') === 'true',
+      auth: {
+        type: 'login',
+        user: env.get('SMTP_USERNAME'),
+        pass: env.get('SMTP_PASSWORD'),
+      },
     }),
   },
 })
