@@ -1,5 +1,9 @@
-import { useClientStore, Client } from "../../../stores/clientStore";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useClientStore, Client } from "../../../stores/clientStore";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,9 +86,7 @@ export default function ClientDelete({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Tipo:</span>
-                    <Badge variant="outline">
-                      {client.identification_type}
-                    </Badge>
+                    <Badge variant="outline">{client.identification_type}</Badge>
                   </div>
                   <div>
                     <span className="font-semibold">Email:</span>{" "}
