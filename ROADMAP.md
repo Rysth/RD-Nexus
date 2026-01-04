@@ -47,7 +47,7 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 - Frontend
   - [x] En detalle de proyecto: tab/section "Servicios Recurrentes" con crear/editar/pausar
 - Done
-  - [ ] Proyecto puede tener múltiples servicios recurrentes activos/pausados
+  - [x] Proyecto puede tener múltiples servicios recurrentes activos/pausados
 
 ---
 

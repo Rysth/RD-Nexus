@@ -25,6 +25,7 @@ const BusinessesController = () => import('#controllers/businesses_controller')
 const ClientsController = () => import('#controllers/clients_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
 const RecurringServicesController = () => import('#controllers/recurring_services_controller')
+const QuotesController = () => import('#controllers/quotes_controller')
 
 // Health check
 router.get('/', async () => {
@@ -125,6 +126,19 @@ router
             router.patch('/:id/toggle-status', [RecurringServicesController, 'toggleStatus']).use(sensitiveThrottle)
           })
           .prefix('/recurring-services')
+
+        // Quotes management
+        router
+          .group(() => {
+            router.get('/', [QuotesController, 'index'])
+            router.post('/', [QuotesController, 'store']).use(sensitiveThrottle)
+            router.get('/:id', [QuotesController, 'show'])
+            router.put('/:id', [QuotesController, 'update']).use(sensitiveThrottle)
+            router.delete('/:id', [QuotesController, 'destroy']).use(sensitiveThrottle)
+            router.patch('/:id/status', [QuotesController, 'updateStatus']).use(sensitiveThrottle)
+            router.post('/:id/duplicate', [QuotesController, 'duplicate']).use(sensitiveThrottle)
+          })
+          .prefix('/quotes')
       })
       .use(middleware.auth())
   })
