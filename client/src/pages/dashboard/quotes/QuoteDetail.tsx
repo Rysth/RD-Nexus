@@ -116,8 +116,8 @@ export default function QuoteDetail() {
   const handleStatusUpdate = async (newStatus: string) => {
     if (!currentQuote) return;
     try {
-      await updateQuoteStatus(currentQuote.id, newStatus);
-      toast.success(`Estado cambiado a ${newStatus}`);
+      const updated = await updateQuoteStatus(currentQuote.id, newStatus);
+      toast.success(`Estado cambiado a ${updated.status_label}`);
     } catch {
       toast.error("Error al cambiar estado");
     }
@@ -135,9 +135,9 @@ export default function QuoteDetail() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("es-GT", {
+    return new Intl.NumberFormat("es-EC", {
       style: "currency",
-      currency: "GTQ",
+      currency: "USD",
     }).format(value);
   };
 

@@ -8,6 +8,7 @@
 */
 
 import router from '@adonisjs/core/services/router'
+import env from '#start/env'
 import { middleware } from './kernel.js'
 import {
   globalThrottle,
@@ -40,7 +41,7 @@ router.get('/', async () => {
 router.jobs('/jobs')
 
 // API v1 routes
-router
+const apiV1 = router
   .group(() => {
     // Public routes (no auth required)
     router.get('/public/business', [BusinessesController, 'publicShow'])
@@ -143,4 +144,8 @@ router
       .use(middleware.auth())
   })
   .prefix('/api/v1')
-  .use(globalThrottle) // Apply global rate limiting to all API routes
+
+// Apply global rate limiting only in production (avoid blocking local development)
+if (env.get('NODE_ENV') === 'production') {
+  apiV1.use(globalThrottle)
+}
