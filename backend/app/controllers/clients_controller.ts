@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Client from '#models/client'
 import CacheService from '#services/cache_service'
 import vine from '@vinejs/vine'
+import ExcelJS from 'exceljs'
 
 // Cache TTLs (seconds)
 const CACHE_TTL = {
@@ -220,5 +221,84 @@ export default class ClientsController {
     await CacheService.invalidateClients(client.id)
 
     return response.ok({ message: 'Cliente eliminado correctamente' })
+  }
+
+  /**
+   * GET /api/v1/clients/export
+   * Export clients to Excel (similar to users export)
+   */
+  async export({ request, response }: HttpContext) {
+    const search = request.input('search')
+
+    let query = Client.query()
+
+    if (search) {
+      query = query.where((builder) => {
+        builder
+          .whereILike('name', `%${search}%`)
+          .orWhereILike('identification', `%${search}%`)
+          .orWhereILike('email', `%${search}%`)
+      })
+    }
+
+    query = query.orderBy('id', 'asc')
+
+    const clients = await query
+
+    const workbook = new ExcelJS.Workbook()
+    const sheet = workbook.addWorksheet('Clientes')
+
+    const header = [
+      'ID',
+      'Nombre',
+      'Tipo ID',
+      'Identificación',
+      'Email',
+      'Teléfono',
+      'Dirección',
+      'Notas',
+      'Creado el',
+      'Actualizado el',
+    ]
+
+    sheet.addRow(header)
+
+    clients.forEach((client) => {
+      sheet.addRow([
+        client.id,
+        client.name,
+        client.identificationType,
+        client.identification,
+        client.email,
+        client.phone,
+        client.address,
+        client.notes,
+        client.createdAt?.toISO(),
+        client.updatedAt?.toISO(),
+      ])
+    })
+
+    sheet.columns?.forEach((column) => {
+      // Autosize basic columns to content length
+      let maxLength = 10
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        const cellValue = cell.value ? cell.value.toString() : ''
+        maxLength = Math.max(maxLength, cellValue.length)
+      })
+      column.width = Math.min(maxLength + 2, 40)
+    })
+
+    const buffer = await workbook.xlsx.writeBuffer()
+
+    response.header(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response.header(
+      'Content-Disposition',
+      `attachment; filename="clients_${new Date().toISOString().replace(/[:]/g, '-')}.xlsx"`
+    )
+
+    return response.send(buffer)
   }
 }

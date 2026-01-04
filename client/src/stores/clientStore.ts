@@ -94,6 +94,7 @@ interface ClientState {
   clients: Client[];
   currentClient: (Client & { projects: Project[] }) | null;
   clientsLoading: boolean;
+  clientsExporting: boolean;
   clientsPagination: Pagination;
   
   // Projects
@@ -110,6 +111,7 @@ interface ClientState {
   createClient: (data: CreateClientData) => Promise<Client>;
   updateClient: (id: number, data: UpdateClientData) => Promise<Client>;
   deleteClient: (id: number) => Promise<void>;
+  exportClients: (filters?: ClientFilters) => Promise<void>;
   
   // Project actions
   fetchProjects: (page?: number, perPage?: number, filters?: ProjectFilters) => Promise<void>;
@@ -125,6 +127,7 @@ export const useClientStore = create<ClientState>((set) => ({
   clients: [],
   currentClient: null,
   clientsLoading: false,
+  clientsExporting: false,
   clientsPagination: { current_page: 1, last_page: 1, total: 0, per_page: 25 },
   
   projects: [],
@@ -231,6 +234,44 @@ export const useClientStore = create<ClientState>((set) => ({
       set({
         error: error.response?.data?.error || "Error al eliminar cliente",
         clientsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  exportClients: async (filters = {}) => {
+    set({ clientsExporting: true, error: null });
+    try {
+      const params: Record<string, string> = {};
+
+      if (filters.search) {
+        params.search = filters.search;
+      }
+
+      const response = await api.get("/api/v1/clients/export", {
+        params,
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+      link.setAttribute("download", `clientes_${timestamp}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      set({ clientsExporting: false });
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al exportar clientes",
+        clientsExporting: false,
       });
       throw error;
     }

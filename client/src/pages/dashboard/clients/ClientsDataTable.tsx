@@ -8,7 +8,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Plus, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,6 +32,8 @@ interface ClientsDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onCreateClient?: () => void;
+  onExportClients?: () => void;
+  isExporting?: boolean;
   onSearchChange?: (term: string) => void;
   onPageChange?: (selectedItem: { selected: number }) => void;
   isLoading: boolean;
@@ -47,6 +49,8 @@ export function ClientsDataTable<TData, TValue>({
   columns,
   data,
   onCreateClient,
+  onExportClients,
+  isExporting,
   onSearchChange,
   onPageChange,
   isLoading,
@@ -102,6 +106,17 @@ export function ClientsDataTable<TData, TValue>({
           )}
         </div>
         <div className="flex items-center space-x-2">
+          {onExportClients && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExportClients}
+              disabled={isExporting}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? "Exportando..." : "Exportar"}
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">

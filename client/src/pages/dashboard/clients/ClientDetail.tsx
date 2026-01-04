@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useClientStore, Project } from "../../../stores/clientStore";
+import { useClientStore, Project, Client } from "../../../stores/clientStore";
+import { useAuthStore } from "../../../stores/authStore";
 import {
   ArrowLeft,
   Building2,
@@ -40,6 +41,7 @@ import {
 import ProjectCreate from "./ProjectCreate";
 import ProjectEdit from "./ProjectEdit";
 import ProjectDelete from "./ProjectDelete";
+import ClientEdit from "./ClientEdit";
 
 const idTypeLabels: Record<string, string> = {
   "04": "RUC",
@@ -62,6 +64,7 @@ const statusLabels: Record<string, string> = {
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuthStore();
   const {
     fetchClient,
     currentClient,
@@ -74,6 +77,11 @@ export default function ClientDetail() {
   const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [editClientOpen, setEditClientOpen] = useState(false);
+
+  const canManageClients = currentUser?.roles.some((role) =>
+    ["admin", "manager"].includes(role)
+  );
 
   useEffect(() => {
     if (id) {
@@ -141,6 +149,11 @@ export default function ClientDetail() {
             </p>
           </div>
         </div>
+        {canManageClients && (
+          <Button variant="outline" onClick={() => setEditClientOpen(true)}>
+            <Pencil className="h-4 w-4 mr-2" /> Editar Cliente
+          </Button>
+        )}
       </div>
 
       {/* Client Info Card */}
@@ -320,6 +333,20 @@ export default function ClientDetail() {
             onSuccess={handleProjectSuccess}
           />
         </>
+      )}
+
+      {canManageClients && currentClient && (
+        <ClientEdit
+          open={editClientOpen}
+          onOpenChange={setEditClientOpen}
+          client={currentClient as unknown as Client}
+          onSuccess={() => {
+            if (id) {
+              fetchClient(Number(id));
+              fetchProjectsByClient(Number(id));
+            }
+          }}
+        />
       )}
     </div>
   );

@@ -12,8 +12,14 @@ import ClientDelete from "./ClientDelete";
 export default function ClientsIndex() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
-  const { clients, clientsLoading, clientsPagination, fetchClients } =
-    useClientStore();
+  const {
+    clients,
+    clientsLoading,
+    clientsPagination,
+    clientsExporting,
+    fetchClients,
+    exportClients,
+  } = useClientStore();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -69,6 +75,15 @@ export default function ClientsIndex() {
     fetchClients(page, perPage, { search: searchTerm });
   };
 
+  const handleExportClients = async () => {
+    try {
+      await exportClients({ search: searchTerm });
+      toast.success("Clientes exportados correctamente");
+    } catch (error: any) {
+      toast.error(error.message || "Error al exportar clientes");
+    }
+  };
+
   const columns = createClientsColumns({
     onView: handleViewClick,
     onEdit: handleEditClick,
@@ -90,6 +105,8 @@ export default function ClientsIndex() {
         onCreateClient={
           canManageClients ? () => setCreateModalOpen(true) : undefined
         }
+        onExportClients={handleExportClients}
+        isExporting={clientsExporting}
         onSearchChange={(term) => setSearchTerm(term)}
         onPageChange={clientsPagination ? handlePageChange : undefined}
         isLoading={clientsLoading}

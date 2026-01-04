@@ -91,6 +91,7 @@ router
         router
           .group(() => {
             router.get('/', [ClientsController, 'index'])
+            router.get('/export', [ClientsController, 'export'])
             router.post('/', [ClientsController, 'store']).use(sensitiveThrottle)
             router.get('/:id', [ClientsController, 'show'])
             router.put('/:id', [ClientsController, 'update']).use(sensitiveThrottle)
