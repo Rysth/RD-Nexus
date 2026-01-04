@@ -50,12 +50,25 @@ export default class Project extends BaseModel {
 
   // Serialize for API
   serializeForApi() {
+    const startDateIso = (() => {
+      // Ensure we always return a string ISO date or null
+      if (!this.startDate) return null
+      if (typeof (this.startDate as any).toISODate === 'function') {
+        return (this.startDate as unknown as DateTime).toISODate()
+      }
+      try {
+        return DateTime.fromISO(String(this.startDate)).toISODate()
+      } catch (error) {
+        return null
+      }
+    })()
+
     return {
       id: this.id,
       client_id: this.clientId,
       name: this.name,
       production_url: this.productionUrl,
-      start_date: this.startDate?.toISODate(),
+      start_date: startDateIso,
       status: this.status,
       status_label: this.statusLabel,
       description: this.description,

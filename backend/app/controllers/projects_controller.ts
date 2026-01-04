@@ -3,6 +3,7 @@ import Project from '#models/project'
 import Client from '#models/client'
 import CacheService from '#services/cache_service'
 import vine from '@vinejs/vine'
+import { DateTime } from 'luxon'
 
 // Cache TTLs (seconds)
 const CACHE_TTL = {
@@ -162,7 +163,8 @@ export default class ProjectsController {
       clientId: data.client_id,
       name: data.name,
       productionUrl: data.production_url || null,
-      startDate: data.start_date ? data.start_date : null,
+      // Normalize to DateTime for Lucid date column
+      startDate: data.start_date ? DateTime.fromISO(data.start_date) : null,
       status: (data.status as 'active' | 'maintenance' | 'canceled') || 'active',
       description: data.description || null,
     })
@@ -202,7 +204,12 @@ export default class ProjectsController {
       clientId: data.client_id ?? project.clientId,
       name: data.name ?? project.name,
       productionUrl: data.production_url !== undefined ? data.production_url : project.productionUrl,
-      startDate: data.start_date !== undefined ? (data.start_date || null) : project.startDate,
+      startDate:
+        data.start_date !== undefined
+          ? data.start_date
+            ? DateTime.fromISO(data.start_date)
+            : null
+          : project.startDate,
       status: (data.status as 'active' | 'maintenance' | 'canceled') ?? project.status,
       description: data.description !== undefined ? data.description : project.description,
     })

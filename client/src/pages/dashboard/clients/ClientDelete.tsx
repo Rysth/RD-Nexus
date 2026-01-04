@@ -86,7 +86,9 @@ export default function ClientDelete({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Tipo:</span>
-                    <Badge variant="outline">{client.identification_type}</Badge>
+                    <Badge variant="outline">
+                      {client.identification_type}
+                    </Badge>
                   </div>
                   <div>
                     <span className="font-semibold">Email:</span>{" "}

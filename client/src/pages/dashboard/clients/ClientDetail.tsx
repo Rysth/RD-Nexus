@@ -352,10 +352,7 @@ export default function ClientDetail() {
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-primary hover:underline max-w-[200px] truncate"
                               >
-                                {project.production_url.replace(
-                                  /^https?:\/\//,
-                                  ""
-                                )}
+                                {project.production_url}
                                 <ExternalLink className="h-3 w-3 flex-shrink-0" />
                               </a>
                             ) : (
