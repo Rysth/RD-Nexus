@@ -42,13 +42,19 @@ export const createClientsColumns = ({
       return (
         <div className="flex flex-col gap-1">
           <div className="font-medium leading-tight">{client.name}</div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge className={idCfg.className}>{idCfg.label}</Badge>
-            <span>{client.identification}</span>
-          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground"></div>
         </div>
       );
     },
+  },
+  {
+    accessorKey: "identification",
+    header: "Cédula",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {row.original.identification}
+      </span>
+    ),
   },
   {
     accessorKey: "email",
