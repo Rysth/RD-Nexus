@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuoteStore, Quote } from "@/stores/quoteStore";
+import { useQuoteStore, Quote, QuoteFilters } from "@/stores/quoteStore";
 import { useClientStore } from "@/stores/clientStore";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -47,6 +41,7 @@ import {
   DollarSign,
   Clock,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -61,14 +56,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import Pagination from "@/components/common/Pagination";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500",
@@ -87,6 +75,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 export default function QuoteList() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const perPage = 25;
 
   const {
     quotes,
@@ -111,17 +100,18 @@ export default function QuoteList() {
 
   useEffect(() => {
     const page = parseInt(searchParams.get("page") || "1");
-    const filters: any = {};
+    const filters: QuoteFilters = {};
     if (statusFilter) filters.status = statusFilter;
     if (clientFilter) filters.client_id = parseInt(clientFilter);
-    fetchQuotes(page, 25, filters);
+    fetchQuotes(page, perPage, filters);
   }, [fetchQuotes, searchParams, statusFilter, clientFilter]);
 
   useEffect(() => {
-    fetchClients(1, 100); // Load clients for filter
+    fetchClients(1, 100);
   }, [fetchClients]);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = (selectedItem: { selected: number }) => {
+    const page = selectedItem.selected + 1;
     const newParams = new URLSearchParams(searchParams);
     newParams.set("page", String(page));
     setSearchParams(newParams);
@@ -147,6 +137,14 @@ export default function QuoteList() {
     } else {
       newParams.delete("client_id");
     }
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter("");
+    setClientFilter("");
+    const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
   };
@@ -177,12 +175,6 @@ export default function QuoteList() {
     try {
       const updated = await updateQuoteStatus(quote.id, newStatus);
       toast.success(`Estado cambiado a ${updated.status_label}`);
-      // Refetch to update the list
-      const page = parseInt(searchParams.get("page") || "1");
-      const filters: any = {};
-      if (statusFilter) filters.status = statusFilter;
-      if (clientFilter) filters.client_id = parseInt(clientFilter);
-      fetchQuotes(page, 25, filters);
     } catch {
       toast.error("Error al cambiar estado");
     }
@@ -206,7 +198,7 @@ export default function QuoteList() {
   };
 
   // Stats
-  const totalQuotes = quotes.length;
+  const totalQuotes = quotesPagination.total;
   const draftQuotes = quotes.filter((q) => q.status === "draft").length;
   const sentQuotes = quotes.filter((q) => q.status === "sent").length;
   const approvedQuotes = quotes.filter((q) => q.status === "approved").length;
@@ -214,21 +206,11 @@ export default function QuoteList() {
     .filter((q) => q.status === "approved")
     .reduce((acc, q) => acc + q.total, 0);
 
+  const hasFilters = statusFilter !== "" || clientFilter !== "";
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Cotizaciones</h2>
-          <p className="text-muted-foreground">
-            Gestiona las cotizaciones para tus clientes
-          </p>
-        </div>
-        <Button onClick={() => navigate("/dashboard/quotes/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Cotización
-        </Button>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -277,57 +259,63 @@ export default function QuoteList() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-4">
-          <Select
-            value={statusFilter || "all"}
-            onValueChange={handleStatusChange}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          value={statusFilter || "all"}
+          onValueChange={handleStatusChange}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="draft">Borrador</SelectItem>
+            <SelectItem value="sent">Enviada</SelectItem>
+            <SelectItem value="approved">Aprobada</SelectItem>
+            <SelectItem value="rejected">Rechazada</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={clientFilter || "all"}
+          onValueChange={handleClientChange}
+        >
+          <SelectTrigger className="w-[250px]">
+            <SelectValue placeholder="Cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los clientes</SelectItem>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={String(client.id)}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            className="h-8 px-2 lg:px-3"
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="draft">Borrador</SelectItem>
-              <SelectItem value="sent">Enviada</SelectItem>
-              <SelectItem value="approved">Aprobada</SelectItem>
-              <SelectItem value="rejected">Rechazada</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={clientFilter || "all"}
-            onValueChange={handleClientChange}
-          >
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los clientes</SelectItem>
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={String(client.id)}>
-                  {client.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+            <X className="w-4 h-4 mr-2" />
+            Limpiar filtros
+          </Button>
+        )}
+      </div>
+
+      <Button onClick={() => navigate("/dashboard/quotes/new")}>
+        <Plus className="mr-2 h-4 w-4" />
+        Nueva Cotización
+      </Button>
 
       {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Cotizaciones</CardTitle>
-          <CardDescription>
-            {quotesPagination.total} cotizaciones encontradas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card className="p-0 rounded-xl">
+        <CardContent className="p-0">
           {quotesLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="w-6 h-6 border-2 border-gray-300 rounded-full animate-spin border-t-gray-600" />
+              <span className="ml-2">Cargando cotizaciones...</span>
             </div>
           ) : quotes.length === 0 ? (
             <div className="text-center py-8">
@@ -347,221 +335,159 @@ export default function QuoteList() {
               </Button>
             </div>
           ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Número</TableHead>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Válida Hasta</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {quotes.map((quote) => (
-                    <TableRow key={quote.id}>
-                      <TableCell className="font-mono text-sm">
-                        {quote.quote_number}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {quote.title}
-                      </TableCell>
-                      <TableCell>{quote.client?.name || "-"}</TableCell>
-                      <TableCell>
-                        {format(new Date(quote.issue_date), "dd MMM yyyy", {
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Válida Hasta</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {quotes.map((quote) => (
+                  <TableRow key={quote.id}>
+                    <TableCell className="font-mono text-sm">
+                      {quote.quote_number}
+                    </TableCell>
+                    <TableCell className="font-medium">{quote.title}</TableCell>
+                    <TableCell>{quote.client?.name || "-"}</TableCell>
+                    <TableCell>
+                      {format(new Date(quote.issue_date), "dd MMM yyyy", {
+                        locale: es,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {format(new Date(quote.valid_until), "dd MMM yyyy", {
                           locale: es,
                         })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {format(new Date(quote.valid_until), "dd MMM yyyy", {
-                            locale: es,
-                          })}
-                          {quote.is_expired && (
-                            <AlertCircle className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {formatCurrency(quote.total)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${statusColors[quote.status]} text-white`}
-                        >
-                          <span className="mr-1">
-                            {statusIcons[quote.status]}
-                          </span>
-                          {quote.status_label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                        {quote.is_expired && (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      {formatCurrency(quote.total)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={`${statusColors[quote.status]} text-white`}
+                      >
+                        <span className="mr-1">
+                          {statusIcons[quote.status]}
+                        </span>
+                        {quote.status_label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              navigate(`/dashboard/quotes/${quote.id}`)
+                            }
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver detalle
+                          </DropdownMenuItem>
+                          {quote.is_editable && (
                             <DropdownMenuItem
                               onClick={() =>
-                                navigate(`/dashboard/quotes/${quote.id}`)
+                                navigate(`/dashboard/quotes/${quote.id}/edit`)
                               }
                             >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Ver detalle
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
                             </DropdownMenuItem>
-                            {quote.is_editable && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  navigate(`/dashboard/quotes/${quote.id}/edit`)
-                                }
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar
-                              </DropdownMenuItem>
-                            )}
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => handleDuplicate(quote)}
+                          >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Duplicar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+
+                          {/* Status actions */}
+                          {quote.status === "draft" && (
                             <DropdownMenuItem
-                              onClick={() => handleDuplicate(quote)}
+                              onClick={() => handleStatusUpdate(quote, "sent")}
                             >
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicar
+                              <Send className="mr-2 h-4 w-4" />
+                              Marcar como Enviada
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-
-                            {/* Status actions */}
-                            {quote.status === "draft" && (
+                          )}
+                          {quote.status === "sent" && (
+                            <>
                               <DropdownMenuItem
                                 onClick={() =>
-                                  handleStatusUpdate(quote, "sent")
+                                  handleStatusUpdate(quote, "approved")
                                 }
                               >
-                                <Send className="mr-2 h-4 w-4" />
-                                Marcar como Enviada
+                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                Marcar como Aprobada
                               </DropdownMenuItem>
-                            )}
-                            {quote.status === "sent" && (
-                              <>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleStatusUpdate(quote, "approved")
-                                  }
-                                >
-                                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                                  Marcar como Aprobada
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleStatusUpdate(quote, "rejected")
-                                  }
-                                >
-                                  <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                                  Marcar como Rechazada
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {(quote.status === "sent" ||
-                              quote.status === "rejected") && (
                               <DropdownMenuItem
                                 onClick={() =>
-                                  handleStatusUpdate(quote, "draft")
+                                  handleStatusUpdate(quote, "rejected")
                                 }
                               >
-                                <FileText className="mr-2 h-4 w-4" />
-                                Regresar a Borrador
+                                <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                                Marcar como Rechazada
                               </DropdownMenuItem>
-                            )}
+                            </>
+                          )}
+                          {(quote.status === "sent" ||
+                            quote.status === "rejected") && (
+                            <DropdownMenuItem
+                              onClick={() => handleStatusUpdate(quote, "draft")}
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              Regresar a Borrador
+                            </DropdownMenuItem>
+                          )}
 
-                            <DropdownMenuSeparator />
-                            {quote.is_editable && (
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(quote)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Eliminar
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {quotesPagination.last_page > 1 && (
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    Mostrando{" "}
-                    {(quotesPagination.current_page - 1) *
-                      quotesPagination.per_page +
-                      1}{" "}
-                    a{" "}
-                    {Math.min(
-                      quotesPagination.current_page * quotesPagination.per_page,
-                      quotesPagination.total
-                    )}{" "}
-                    de {quotesPagination.total} resultados
-                  </p>
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() =>
-                            handlePageChange(quotesPagination.current_page - 1)
-                          }
-                          className={
-                            quotesPagination.current_page === 1
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-                      {Array.from(
-                        { length: Math.min(5, quotesPagination.last_page) },
-                        (_, i) => {
-                          const page = i + 1;
-                          return (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                onClick={() => handlePageChange(page)}
-                                isActive={
-                                  quotesPagination.current_page === page
-                                }
-                                className="cursor-pointer"
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-                      )}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() =>
-                            handlePageChange(quotesPagination.current_page + 1)
-                          }
-                          className={
-                            quotesPagination.current_page ===
-                            quotesPagination.last_page
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </>
+                          <DropdownMenuSeparator />
+                          {quote.is_editable && (
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(quote)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {quotesPagination.last_page > 1 && (
+        <Pagination
+          currentPage={quotesPagination.current_page - 1}
+          pageCount={quotesPagination.last_page}
+          perPage={quotesPagination.per_page}
+          totalCount={quotesPagination.total}
+          onPageChange={handlePageChange}
+        />
+      )}
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

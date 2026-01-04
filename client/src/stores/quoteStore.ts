@@ -8,8 +8,11 @@ export interface QuoteItem {
   quote_id?: number;
   description: string;
   quantity: number;
+  unit: string;
   unit_price: number;
+  discount_percent: number;
   subtotal: number;
+  notes?: string | null;
   sort_order?: number;
   created_at?: string;
   updated_at?: string;
@@ -21,14 +24,18 @@ export interface Quote {
   client_id: number;
   quote_number: string;
   title: string;
+  description: string | null;
   issue_date: string;
   valid_until: string;
   status: "draft" | "sent" | "approved" | "rejected";
   status_label: string;
   subtotal: number;
-  tax_rate: number;
+  discount_percent: number;
+  discount_amount: number;
+  tax_percent: number;
   tax_amount: number;
   total: number;
+  terms_conditions: string | null;
   notes: string | null;
   is_editable: boolean;
   is_expired: boolean;
@@ -46,7 +53,7 @@ interface Pagination {
   per_page: number;
 }
 
-interface QuoteFilters {
+export interface QuoteFilters {
   client_id?: number;
   project_id?: number;
   status?: string;
@@ -55,16 +62,22 @@ interface QuoteFilters {
 interface CreateQuoteItemData {
   description: string;
   quantity: number;
+  unit: string;
   unit_price: number;
+  discount_percent?: number;
+  notes?: string;
 }
 
 interface CreateQuoteData {
   client_id: number;
   project_id?: number | null;
   title: string;
+  description?: string | null;
   issue_date: string;
   valid_until: string;
-  tax_rate?: number;
+  discount_percent?: number;
+  tax_percent?: number;
+  terms_conditions?: string | null;
   notes?: string | null;
   items: CreateQuoteItemData[];
 }
@@ -73,10 +86,13 @@ interface UpdateQuoteData {
   client_id?: number;
   project_id?: number | null;
   title?: string;
+  description?: string | null;
   issue_date?: string;
   valid_until?: string;
   status?: "draft" | "sent" | "approved" | "rejected";
-  tax_rate?: number;
+  discount_percent?: number;
+  tax_percent?: number;
+  terms_conditions?: string | null;
   notes?: string | null;
   items?: CreateQuoteItemData[];
 }

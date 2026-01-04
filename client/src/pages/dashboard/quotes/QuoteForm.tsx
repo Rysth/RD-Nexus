@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useQuoteStore } from "@/stores/quoteStore";
+import { z } from "zod";
+import { useQuoteStore, QuoteItem } from "@/stores/quoteStore";
 import { useClientStore, Project } from "@/stores/clientStore";
+import { format, addDays } from "date-fns";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -31,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -39,71 +40,85 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
-import { Plus, Trash2, ArrowLeft, Save, Calculator } from "lucide-react";
-import { format } from "date-fns";
-import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Save,
+  Loader2,
+  Calculator,
+} from "lucide-react";
 
 const quoteItemSchema = z.object({
-  description: z.string().min(1, "Descripción requerida"),
-  quantity: z.coerce.number().min(0.01, "Cantidad debe ser mayor a 0"),
-  unit_price: z.coerce.number().min(0, "Precio debe ser 0 o mayor"),
+  description: z.string().min(1, "Descripción es requerida"),
+  quantity: z.coerce.number().min(0.01, "Mínimo 0.01"),
+  unit: z.string().min(1, "Unidad es requerida"),
+  unit_price: z.coerce.number().min(0, "Precio debe ser >= 0"),
+  discount_percent: z.coerce.number().min(0).max(100).optional().default(0),
+  notes: z.string().optional(),
 });
 
-const formSchema = z.object({
-  client_id: z.coerce.number().min(1, "Selecciona un cliente"),
-  project_id: z.coerce.number().nullable().optional(),
-  title: z.string().min(2, "Título debe tener al menos 2 caracteres"),
-  issue_date: z.string().min(1, "Fecha de emisión requerida"),
-  valid_until: z.string().min(1, "Fecha de validez requerida"),
-  tax_rate: z.coerce.number().min(0).max(100).default(15),
-  notes: z.string().nullable().optional(),
+const quoteFormSchema = z.object({
+  client_id: z.coerce.number().min(1, "Cliente es requerido"),
+  project_id: z.coerce.number().optional().nullable(),
+  title: z.string().min(1, "Título es requerido").max(255),
+  description: z.string().optional(),
+  issue_date: z.string().min(1, "Fecha de emisión es requerida"),
+  valid_until: z.string().min(1, "Fecha de validez es requerida"),
+  discount_percent: z.coerce.number().min(0).max(100).optional().default(0),
+  tax_percent: z.coerce.number().min(0).max(100).optional().default(12),
+  terms_conditions: z.string().optional(),
+  notes: z.string().optional(),
   items: z.array(quoteItemSchema).min(1, "Agrega al menos un elemento"),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type QuoteFormValues = z.infer<typeof quoteFormSchema>;
 
-interface QuoteFormProps {
-  mode: "create" | "edit";
-}
-
-export default function QuoteForm({ mode }: QuoteFormProps) {
+export default function QuoteForm() {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clientProjects, setClientProjects] = useState<Project[]>([]);
+  const { id } = useParams<{ id: string }>();
+  const isEdit = Boolean(id);
 
   const {
     currentQuote,
+    quotesLoading,
     fetchQuote,
     createQuote,
     updateQuote,
-    quotesLoading,
     clearCurrentQuote,
   } = useQuoteStore();
 
-  const {
-    clients,
-    projects,
-    fetchClients,
-    fetchProjects,
-    fetchProjectsByClient,
-  } = useClientStore();
+  const { clients, fetchClients, fetchProjectsByClient } = useClientStore();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  // Estado local para proyectos del cliente seleccionado
+  const [clientProjects, setClientProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+
+  const form = useForm<QuoteFormValues>({
+    resolver: zodResolver(quoteFormSchema),
     defaultValues: {
       client_id: 0,
       project_id: null,
       title: "",
+      description: "",
       issue_date: format(new Date(), "yyyy-MM-dd"),
-      valid_until: format(
-        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        "yyyy-MM-dd"
-      ),
-      tax_rate: 15,
+      valid_until: format(addDays(new Date(), 30), "yyyy-MM-dd"),
+      discount_percent: 0,
+      tax_percent: 12,
+      terms_conditions: "",
       notes: "",
-      items: [{ description: "", quantity: 1, unit_price: 0 }],
+      items: [
+        {
+          description: "",
+          quantity: 1,
+          unit: "unidad",
+          unit_price: 0,
+          discount_percent: 0,
+          notes: "",
+        },
+      ],
     },
   });
 
@@ -112,80 +127,97 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
     name: "items",
   });
 
-  // Load clients on mount
+  // Load clients
   useEffect(() => {
     fetchClients(1, 100);
-    fetchProjects(1, 100);
-  }, [fetchClients, fetchProjects]);
+  }, [fetchClients]);
 
-  // Load quote in edit mode
+  // Load quote if editing
   useEffect(() => {
-    if (mode === "edit" && id) {
+    if (isEdit && id) {
       fetchQuote(parseInt(id));
     }
-    return () => {
-      clearCurrentQuote();
-    };
-  }, [mode, id, fetchQuote, clearCurrentQuote]);
+    return () => clearCurrentQuote();
+  }, [isEdit, id, fetchQuote, clearCurrentQuote]);
 
-  // Populate form when quote is loaded
+  // Populate form when editing
   useEffect(() => {
-    if (mode === "edit" && currentQuote) {
-      // Load client's projects first
-      if (currentQuote.client_id) {
-        fetchProjectsByClient(currentQuote.client_id);
-      }
-
+    if (isEdit && currentQuote) {
       form.reset({
         client_id: currentQuote.client_id,
-        project_id: currentQuote.project_id,
+        project_id: currentQuote.project_id || null,
         title: currentQuote.title,
+        description: currentQuote.description || "",
         issue_date: currentQuote.issue_date,
         valid_until: currentQuote.valid_until,
-        tax_rate: currentQuote.tax_rate,
+        discount_percent: Number(currentQuote.discount_percent) || 0,
+        tax_percent: Number(currentQuote.tax_percent) || 12,
+        terms_conditions: currentQuote.terms_conditions || "",
         notes: currentQuote.notes || "",
         items:
-          currentQuote.items?.map((item) => ({
+          currentQuote.items?.map((item: QuoteItem) => ({
             description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
+            quantity: Number(item.quantity),
+            unit: item.unit,
+            unit_price: Number(item.unit_price),
+            discount_percent: Number(item.discount_percent) || 0,
+            notes: item.notes || "",
           })) || [],
       });
-    }
-  }, [mode, currentQuote, form, fetchProjectsByClient]);
 
-  // Update client projects when client changes
-  const selectedClientId = form.watch("client_id");
-  useEffect(() => {
-    if (selectedClientId && selectedClientId > 0) {
-      // Load projects from API scoped to the client to ensure only relevant projects appear
-      fetchProjectsByClient(selectedClientId, 1, 100);
-      const filtered = projects.filter((p) => p.client_id === selectedClientId);
-      setClientProjects(filtered);
+      // Cargar proyectos del cliente
+      if (currentQuote.client_id) {
+        loadProjectsForClient(currentQuote.client_id);
+      }
+    }
+  }, [isEdit, currentQuote, form]);
+
+  // Función para cargar proyectos de un cliente
+  const loadProjectsForClient = async (clientId: number) => {
+    setLoadingProjects(true);
+    try {
+      const projects = await fetchProjectsByClient(clientId);
+      setClientProjects(projects || []);
+    } catch (error) {
+      console.error("Error loading projects:", error);
+      setClientProjects([]);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  // Handle client change
+  const handleClientChange = async (clientId: string) => {
+    const numClientId = parseInt(clientId);
+    form.setValue("client_id", numClientId);
+    form.setValue("project_id", null);
+
+    if (numClientId > 0) {
+      await loadProjectsForClient(numClientId);
     } else {
       setClientProjects([]);
     }
-    // Reset project when client changes (except on initial load in edit mode)
-    if (
-      mode === "create" ||
-      (mode === "edit" &&
-        currentQuote &&
-        selectedClientId !== currentQuote.client_id)
-    ) {
-      form.setValue("project_id", null);
-    }
-  }, [selectedClientId, projects, form, mode, currentQuote]);
+  };
 
   // Calculate totals
-  const watchItems = form.watch("items");
-  const watchTaxRate = form.watch("tax_rate");
+  const watchedItems = form.watch("items");
+  const watchedDiscountPercent = form.watch("discount_percent") || 0;
+  const watchedTaxPercent = form.watch("tax_percent") || 0;
 
-  const subtotal = watchItems.reduce((acc, item) => {
-    return acc + (item.quantity || 0) * (item.unit_price || 0);
-  }, 0);
+  const calculateItemSubtotal = (item: (typeof watchedItems)[number]) => {
+    const gross = item.quantity * item.unit_price;
+    const discountAmount = gross * ((item.discount_percent || 0) / 100);
+    return gross - discountAmount;
+  };
 
-  const taxAmount = subtotal * ((watchTaxRate || 0) / 100);
-  const total = subtotal + taxAmount;
+  const subtotal = watchedItems.reduce(
+    (sum, item) => sum + calculateItemSubtotal(item),
+    0
+  );
+  const discountAmount = subtotal * (watchedDiscountPercent / 100);
+  const taxableAmount = subtotal - discountAmount;
+  const taxAmount = taxableAmount * (watchedTaxPercent / 100);
+  const total = taxableAmount + taxAmount;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-EC", {
@@ -194,68 +226,45 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
     }).format(value);
   };
 
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
+  const onSubmit = async (data: QuoteFormValues) => {
     try {
       const payload = {
-        client_id: data.client_id,
-        project_id: data.project_id || null,
-        title: data.title,
-        issue_date: data.issue_date,
-        valid_until: data.valid_until,
-        tax_rate: data.tax_rate,
-        notes: data.notes || null,
-        items: data.items,
+        ...data,
+        project_id: data.project_id || undefined,
       };
 
-      if (mode === "create") {
-        const quote = await createQuote(payload);
-        toast.success("Cotización creada exitosamente");
-        navigate(`/dashboard/quotes/${quote.id}`);
-      } else if (id) {
+      if (isEdit && id) {
         await updateQuote(parseInt(id), payload);
         toast.success("Cotización actualizada exitosamente");
         navigate(`/dashboard/quotes/${id}`);
+      } else {
+        const newQuote = await createQuote(payload);
+        toast.success("Cotización creada exitosamente");
+        navigate(`/dashboard/quotes/${newQuote.id}`);
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Error al guardar cotización");
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Error al guardar";
+      toast.error(message);
     }
   };
 
-  if (mode === "edit" && quotesLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const addItem = () => {
+    append({
+      description: "",
+      quantity: 1,
+      unit: "unidad",
+      unit_price: 0,
+      discount_percent: 0,
+      notes: "",
+    });
+  };
 
-  if (mode === "edit" && !currentQuote && !quotesLoading) {
+  if (isEdit && quotesLoading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Cotización no encontrada</p>
-        <Button variant="link" onClick={() => navigate("/dashboard/quotes")}>
-          Volver a cotizaciones
-        </Button>
-      </div>
-    );
-  }
-
-  if (mode === "edit" && currentQuote && !currentQuote.is_editable) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">
-          Esta cotización no puede ser editada porque su estado es "
-          {currentQuote.status_label}"
-        </p>
-        <Button
-          variant="link"
-          onClick={() => navigate(`/dashboard/quotes/${id}`)}
-        >
-          Ver detalles
-        </Button>
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -264,377 +273,582 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/dashboard/quotes")}
-        >
-          <ArrowLeft className="h-5 w-5" />
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
-            {mode === "create" ? "Nueva Cotización" : "Editar Cotización"}
+            {isEdit ? "Editar Cotización" : "Nueva Cotización"}
           </h2>
           <p className="text-muted-foreground">
-            {mode === "create"
-              ? "Crea una nueva cotización para un cliente"
-              : `Editando ${currentQuote?.quote_number}`}
+            {isEdit
+              ? `Editando ${currentQuote?.quote_number}`
+              : "Crea una nueva cotización para un cliente"}
           </p>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Basic Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Información General</CardTitle>
-              <CardDescription>Datos básicos de la cotización</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="client_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cliente *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={String(field.value || "")}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un cliente" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={String(client.id)}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Left Column - Main Info */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Información General</CardTitle>
+                  <CardDescription>
+                    Datos básicos de la cotización
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Título *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ej: Desarrollo de sitio web"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="project_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Proyecto (opcional)</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(
-                          value === "none" ? null : parseInt(value)
-                        )
-                      }
-                      value={field.value ? String(field.value) : "none"}
-                      disabled={clientProjects.length === 0}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              clientProjects.length === 0
-                                ? "Sin proyectos disponibles"
-                                : "Selecciona un proyecto"
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="client_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cliente *</FormLabel>
+                          <Select
+                            value={field.value ? String(field.value) : ""}
+                            onValueChange={handleClientChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar cliente" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {clients.map((client) => (
+                                <SelectItem
+                                  key={client.id}
+                                  value={String(client.id)}
+                                >
+                                  {client.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="project_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Proyecto (opcional)</FormLabel>
+                          <Select
+                            value={field.value ? String(field.value) : "none"}
+                            onValueChange={(v) =>
+                              field.onChange(v === "none" ? null : parseInt(v))
                             }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Sin proyecto</SelectItem>
-                        {clientProjects.map((project) => (
-                          <SelectItem
-                            key={project.id}
-                            value={String(project.id)}
+                            disabled={
+                              loadingProjects || clientProjects.length === 0
+                            }
                           >
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Vincula esta cotización a un proyecto existente
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={
+                                    loadingProjects
+                                      ? "Cargando proyectos..."
+                                      : clientProjects.length === 0
+                                      ? "Sin proyectos"
+                                      : "Seleccionar proyecto"
+                                  }
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">Sin proyecto</SelectItem>
+                              {clientProjects.map((project) => (
+                                <SelectItem
+                                  key={project.id}
+                                  value={String(project.id)}
+                                >
+                                  {project.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            {loadingProjects && "Cargando proyectos..."}
+                            {!loadingProjects &&
+                              form.watch("client_id") > 0 &&
+                              clientProjects.length === 0 &&
+                              "El cliente no tiene proyectos"}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Título *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ej: Desarrollo de sitio web corporativo"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="issue_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Emisión *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="valid_until"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Válida Hasta *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="h-5 w-5" />
-                Elementos de la Cotización
-              </CardTitle>
-              <CardDescription>
-                Agrega los productos o servicios a cotizar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[45%]">Descripción</TableHead>
-                    <TableHead className="w-[15%]">Cantidad</TableHead>
-                    <TableHead className="w-[20%]">Precio Unitario</TableHead>
-                    <TableHead className="w-[15%]">Subtotal</TableHead>
-                    <TableHead className="w-[5%]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fields.map((field, index) => {
-                    const itemQuantity =
-                      form.watch(`items.${index}.quantity`) || 0;
-                    const itemPrice =
-                      form.watch(`items.${index}.unit_price`) || 0;
-                    const itemSubtotal = itemQuantity * itemPrice;
-
-                    return (
-                      <TableRow key={field.id}>
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.description`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Descripción del servicio/producto"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descripción</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Descripción del trabajo a cotizar"
+                            className="min-h-[100px]"
+                            {...field}
                           />
-                        </TableCell>
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.quantity`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    placeholder="1"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.unit_price`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0.00"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(itemSubtotal)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            disabled={fields.length === 1}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Items */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Elementos</CardTitle>
+                      <CardDescription>
+                        Productos o servicios a cotizar
+                      </CardDescription>
+                    </div>
+                    <Button type="button" onClick={addItem} size="sm">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Agregar
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">
+                            Descripción
+                          </TableHead>
+                          <TableHead className="w-20">Cantidad</TableHead>
+                          <TableHead className="w-24">Unidad</TableHead>
+                          <TableHead className="w-28">P. Unitario</TableHead>
+                          <TableHead className="w-20">Desc. %</TableHead>
+                          <TableHead className="w-28 text-right">
+                            Subtotal
+                          </TableHead>
+                          <TableHead className="w-12" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {fields.map((field, index) => {
+                          const itemSubtotal = calculateItemSubtotal(
+                            watchedItems[index] || {
+                              quantity: 0,
+                              unit_price: 0,
+                              discount_percent: 0,
+                            }
+                          );
+                          return (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`items.${index}.description`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Descripción del item"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`items.${index}.quantity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          min="0.01"
+                                          className="w-20"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`items.${index}.unit`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger className="w-24">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="unidad">
+                                            Unidad
+                                          </SelectItem>
+                                          <SelectItem value="hora">
+                                            Hora
+                                          </SelectItem>
+                                          <SelectItem value="dia">
+                                            Día
+                                          </SelectItem>
+                                          <SelectItem value="semana">
+                                            Semana
+                                          </SelectItem>
+                                          <SelectItem value="mes">
+                                            Mes
+                                          </SelectItem>
+                                          <SelectItem value="proyecto">
+                                            Proyecto
+                                          </SelectItem>
+                                          <SelectItem value="servicio">
+                                            Servicio
+                                          </SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`items.${index}.unit_price`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          min="0"
+                                          className="w-28"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`items.${index}.discount_percent`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          min="0"
+                                          max="100"
+                                          className="w-20"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {formatCurrency(itemSubtotal)}
+                              </TableCell>
+                              <TableCell>
+                                {fields.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => remove(index)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-right">
+                            Subtotal
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(subtotal)}
+                          </TableCell>
+                          <TableCell />
+                        </TableRow>
+                        {watchedDiscountPercent > 0 && (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-right">
+                              Descuento ({watchedDiscountPercent}%)
+                            </TableCell>
+                            <TableCell className="text-right text-red-600">
+                              -{formatCurrency(discountAmount)}
+                            </TableCell>
+                            <TableCell />
+                          </TableRow>
+                        )}
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-right">
+                            IVA ({watchedTaxPercent}%)
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(taxAmount)}
+                          </TableCell>
+                          <TableCell />
+                        </TableRow>
+                        <TableRow className="bg-muted/50">
+                          <TableCell
+                            colSpan={5}
+                            className="text-right text-lg font-bold"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                            Total
+                          </TableCell>
+                          <TableCell className="text-right text-lg font-bold">
+                            {formatCurrency(total)}
+                          </TableCell>
+                          <TableCell />
+                        </TableRow>
+                      </TableFooter>
+                    </Table>
+                  </div>
+                  {form.formState.errors.items && (
+                    <p className="text-sm text-red-500 mt-2">
+                      {form.formState.errors.items.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-4"
-                onClick={() =>
-                  append({ description: "", quantity: 1, unit_price: 0 })
-                }
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Agregar Elemento
-              </Button>
+              {/* Notes & Terms */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notas y Condiciones</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="terms_conditions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Términos y Condiciones</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Términos y condiciones de la cotización"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notas Internas</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Notas internas (no visibles para el cliente)"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Estas notas son solo para uso interno
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Settings */}
+            <div className="space-y-6">
+              {/* Dates */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fechas</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="issue_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fecha de Emisión *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="valid_until"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Válida Hasta *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
               {/* Totals */}
-              <Separator className="my-6" />
-              <div className="flex justify-end">
-                <div className="w-72 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal:</span>
-                    <span className="font-medium">
-                      {formatCurrency(subtotal)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">IVA:</span>
-                      <FormField
-                        control={form.control}
-                        name="tax_rate"
-                        render={({ field }) => (
-                          <FormItem className="w-20">
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max="100"
-                                className="text-right"
-                                {...field}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <span className="text-muted-foreground">%</span>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    Cálculos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="discount_percent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descuento General (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Se aplica sobre el subtotal
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tax_percent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>IVA (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>{formatCurrency(subtotal)}</span>
                     </div>
-                    <span className="font-medium">
-                      {formatCurrency(taxAmount)}
-                    </span>
+                    {watchedDiscountPercent > 0 && (
+                      <div className="flex justify-between text-sm text-red-600">
+                        <span>Descuento:</span>
+                        <span>-{formatCurrency(discountAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span>IVA:</span>
+                      <span>{formatCurrency(taxAmount)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <span>Total:</span>
+                      <span>{formatCurrency(total)}</span>
+                    </div>
                   </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg">
-                    <span className="font-semibold">Total:</span>
-                    <span className="font-bold text-primary">
-                      {formatCurrency(total)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          {/* Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Notas Adicionales</CardTitle>
-              <CardDescription>
-                Información adicional para el cliente (opcional)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Términos y condiciones, notas especiales, etc."
-                        className="min-h-[100px]"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/dashboard/quotes")}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Guardando...
-                </div>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {mode === "create" ? "Crear Cotización" : "Guardar Cambios"}
-                </>
-              )}
-            </Button>
+              {/* Actions */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={form.formState.isSubmitting}
+                  >
+                    {form.formState.isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        {isEdit ? "Actualizar" : "Crear"} Cotización
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate(-1)}
+                  >
+                    Cancelar
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </form>
       </Form>

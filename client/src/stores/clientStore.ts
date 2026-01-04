@@ -167,7 +167,7 @@ interface ClientState {
   createProject: (data: CreateProjectData) => Promise<Project>;
   updateProject: (id: number, data: UpdateProjectData) => Promise<Project>;
   deleteProject: (id: number) => Promise<void>;
-  fetchProjectsByClient: (clientId: number, page?: number, perPage?: number) => Promise<void>;
+  fetchProjectsByClient: (clientId: number, page?: number, perPage?: number) => Promise<Project[]>;
   
   // Recurring Service actions
   fetchRecurringServices: (page?: number, perPage?: number, filters?: RecurringServiceFilters) => Promise<void>;
@@ -450,8 +450,9 @@ export const useClientStore = create<ClientState>((set) => ({
       });
       
       const response = await api.get(`/api/v1/clients/${clientId}/projects?${params}`);
+      const projects = response.data.data;
       set({
-        projects: response.data.data,
+        projects,
         projectsPagination: {
           current_page: response.data.meta.current_page,
           last_page: response.data.meta.last_page,
@@ -460,6 +461,7 @@ export const useClientStore = create<ClientState>((set) => ({
         },
         projectsLoading: false,
       });
+      return projects;
     } catch (error: any) {
       set({
         error: error.response?.data?.error || "Error al cargar proyectos del cliente",
