@@ -38,8 +38,8 @@ export default class Business extends BaseModel {
     
     if (!business) {
       business = await this.create({
-        name: 'MicroBiz',
-        slogan: 'Powered by RysthDesign',
+        name: 'Nexus',
+        slogan: 'by RysthDesign',
         whatsapp: '',
         instagram: '',
         facebook: '',
@@ -68,11 +68,11 @@ export default class Business extends BaseModel {
 
   // Get name or default
   get nameOrDefault(): string {
-    return this.name || 'MicroBiz'
+    return this.name || 'Nexus'
   }
 
   // Get slogan or default
   get sloganOrDefault(): string {
-    return this.slogan || 'Powered by RysthDesign'
+    return this.slogan || 'by RysthDesign'
   }
 }

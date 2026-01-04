@@ -21,8 +21,8 @@ async function getOrCreateBusiness(): Promise<Business> {
   
   if (!business) {
     business = await Business.create({
-      name: 'MicroBiz',
-      slogan: 'Powered by RysthDesign',
+      name: 'Nexus',
+      slogan: 'by RysthDesign',
       whatsapp: '',
       instagram: '',
       facebook: '',

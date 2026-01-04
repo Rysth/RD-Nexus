@@ -19,7 +19,7 @@ start_containers() {
   # Crear .env si no existe
   if [[ ! -f ".env" ]]; then
     if [[ -f ".env.example" ]]; then
-      blue "Creando .env desde [.env.example](.env.example)..."
+      blue "Creando .env desde .env.example..."
       cp .env.example .env
       green ".env creado."
     else
@@ -77,7 +77,7 @@ start_containers() {
   fi
 
   green "============================================"
-  green "Servicios levantados exitosamente!"
+  green "Servicios de Nexus levantados exitosamente!"
   green "============================================"
   green "Frontend (React):    http://localhost:5173"
   green "Backend (AdonisJS):  http://localhost:3333"

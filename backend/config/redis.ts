@@ -13,7 +13,7 @@ const redisConfig = defineConfig({
       port: env.get('REDIS_PORT', 6379),
       password: env.get('REDIS_PASSWORD', ''),
       db: 0,
-      keyPrefix: 'microbiz:',
+      keyPrefix: 'nexus:',
       retryStrategy(times) {
         // Reconnect after delay, max 2 seconds
         return Math.min(times * 50, 2000)

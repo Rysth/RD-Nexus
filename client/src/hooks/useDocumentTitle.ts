@@ -18,7 +18,7 @@ export const useDocumentTitle = () => {
       document.title = title;
     } else {
       // Fallback title
-      document.title = 'MicroBiz | Powered by RysthDesign';
+      document.title = 'Nexus by RysthDesign';
     }
 
     // Update favicon if business logo is available

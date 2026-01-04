@@ -18,7 +18,7 @@ export default function AuthLayout() {
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm">
               <img src={logo} alt="Logo" className="w-5 h-5" />
             </div>
-            <span className="font-semibold tracking-tight">MicroBiz</span>
+            <span className="font-semibold tracking-tight">Nexus</span>
           </Link>
         </div>
 
@@ -50,7 +50,7 @@ export default function AuthLayout() {
                   className="w-6 h-6 brightness-0 invert"
                 />
               </div>
-              <span className="text-xl font-bold">MicroBiz</span>
+              <span className="text-xl font-bold">Nexus</span>
             </Link>
           </div>
 

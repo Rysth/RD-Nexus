@@ -37,7 +37,7 @@ export default class SendAdminInvitationEmail extends Job {
       await mail.send((message) => {
         message
           .to(email)
-          .subject('Te han invitado a MicroBiz')
+          .subject('Te han invitado a Nexus (by RysthDesign)')
           .htmlView('emails/admin_invitation', {
             user: { fullName },
             token,

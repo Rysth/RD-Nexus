@@ -12,16 +12,14 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {/* Logo */}
         <View className="items-center mb-8">
           <View className="w-16 h-16 rounded-full bg-blue-500 items-center justify-center">
-            <Text className="text-white text-2xl font-bold">MB</Text>
+            <Text className="text-white text-2xl font-bold">NX</Text>
           </View>
-          <Text className="text-xl font-bold text-gray-800 mt-2">MicroBiz</Text>
+          <Text className="text-xl font-bold text-gray-800 mt-2">Nexus</Text>
           <Text className="text-xs text-gray-500">Full-Stack Development</Text>
         </View>
 
         {/* Auth Form Content */}
-        <View className="flex-1">
-          {children}
-        </View>
+        <View className="flex-1">{children}</View>
 
         {/* Footer */}
         <View className="mt-8 pt-6 border-t border-gray-200">

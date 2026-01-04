@@ -3,7 +3,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.dev
-    container_name: microbiz-client
+    container_name: nexus-client
     ports:
       - "5173:5173"
     volumes:
@@ -21,7 +21,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: microbiz-backend
+    container_name: nexus-backend
     ports:
       - "${ADONIS_PORT:-3333}:3333"
     volumes:
@@ -96,7 +96,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: microbiz-jobs
+    container_name: nexus-jobs
     command: node ace jobs:listen --queue=default --queue=mail
     volumes:
       - ./backend:/app

@@ -97,13 +97,13 @@ export default class CacheService {
    */
   static async deleteMatched(pattern: string): Promise<void> {
     try {
-      // keyPrefix is 'microbiz:' - keys() needs the full pattern
-      const fullPattern = `microbiz:${pattern}`
+      // keyPrefix is 'nexus:' - keys() needs the full pattern
+      const fullPattern = `nexus:${pattern}`
       const keys = await redis.keys(fullPattern)
       logger.info({ pattern: fullPattern, count: keys.length }, 'Cache keys deleteMatched')
       if (keys.length > 0) {
         // del() DOES apply keyPrefix, so we must strip it from the keys
-        const strippedKeys = keys.map((k) => k.replace(/^microbiz:/, ''))
+        const strippedKeys = keys.map((k) => k.replace(/^nexus:/, ''))
         await redis.del(...strippedKeys)
       }
     } catch (error) {

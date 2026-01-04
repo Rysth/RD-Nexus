@@ -10,8 +10,8 @@ const mailConfig = defineConfig({
    * Email
    */
   from: {
-    address: 'noreply@microbiz.com',
-    name: 'MicroBiz',
+    address: 'noreply@nexus.rysthdesign.com',
+    name: 'Nexus by RysthDesign',
   },
 
   /**
@@ -20,8 +20,8 @@ const mailConfig = defineConfig({
    * the Email
    */
   replyTo: {
-    address: 'support@microbiz.com',
-    name: 'MicroBiz Support',
+    address: 'support@nexus.rysthdesign.com',
+    name: 'Nexus Support',
   },
 
   /**

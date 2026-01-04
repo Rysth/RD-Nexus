@@ -34,7 +34,7 @@ interface BusinessState {
   loadCachedPublicBusiness: () => Business | null;
 }
 
-const CACHE_KEY = "microbiz_public_business";
+const CACHE_KEY = "nexus_public_business";
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Helper function to load cached data
