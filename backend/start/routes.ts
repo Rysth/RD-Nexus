@@ -24,6 +24,7 @@ const UsersController = () => import('#controllers/users_controller')
 const BusinessesController = () => import('#controllers/businesses_controller')
 const ClientsController = () => import('#controllers/clients_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
+const RecurringServicesController = () => import('#controllers/recurring_services_controller')
 
 // Health check
 router.get('/', async () => {
@@ -108,8 +109,22 @@ router
             router.get('/:id', [ProjectsController, 'show'])
             router.put('/:id', [ProjectsController, 'update']).use(sensitiveThrottle)
             router.delete('/:id', [ProjectsController, 'destroy']).use(sensitiveThrottle)
+            // Nested: recurring services by project
+            router.get('/:projectId/recurring-services', [RecurringServicesController, 'byProject'])
           })
           .prefix('/projects')
+
+        // Recurring Services management
+        router
+          .group(() => {
+            router.get('/', [RecurringServicesController, 'index'])
+            router.post('/', [RecurringServicesController, 'store']).use(sensitiveThrottle)
+            router.get('/:id', [RecurringServicesController, 'show'])
+            router.put('/:id', [RecurringServicesController, 'update']).use(sensitiveThrottle)
+            router.delete('/:id', [RecurringServicesController, 'destroy']).use(sensitiveThrottle)
+            router.patch('/:id/toggle-status', [RecurringServicesController, 'toggleStatus']).use(sensitiveThrottle)
+          })
+          .prefix('/recurring-services')
       })
       .use(middleware.auth())
   })

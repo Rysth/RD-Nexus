@@ -5,7 +5,11 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import Dashboard from "../pages/dashboard/Dashboard";
 import UsersIndex from "../pages/dashboard/users/UsersIndex";
 import BusinessSettings from "../pages/dashboard/business/BusinessSettings";
-import { ClientsIndex, ClientDetail } from "../pages/dashboard/clients";
+import {
+  ClientsIndex,
+  ClientDetail,
+  ProjectDetail,
+} from "../pages/dashboard/clients";
 import AuthSignIn from "../pages/auth/AuthSignIn";
 import AuthSignUp from "../pages/auth/AuthSignUp";
 import AuthConfirm from "../pages/auth/AuthConfirm";
@@ -80,6 +84,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRoles={["admin", "manager"]}>
             <ClientDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "projects/:id",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <ProjectDetail />
           </ProtectedRoute>
         ),
       },

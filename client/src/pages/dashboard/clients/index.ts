@@ -6,3 +6,8 @@ export { default as ClientDelete } from "./ClientDelete";
 export { default as ProjectCreate } from "./ProjectCreate";
 export { default as ProjectEdit } from "./ProjectEdit";
 export { default as ProjectDelete } from "./ProjectDelete";
+export { default as ProjectDetail } from "./ProjectDetail";
+export { default as RecurringServiceCreate } from "./RecurringServiceCreate";
+export { default as RecurringServiceEdit } from "./RecurringServiceEdit";
+export { default as RecurringServiceDelete } from "./RecurringServiceDelete";
+export { default as RecurringServiceList } from "./RecurringServiceList";

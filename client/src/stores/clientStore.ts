@@ -30,6 +30,22 @@ export interface Project {
   client?: Client;
 }
 
+export interface RecurringService {
+  id: number;
+  project_id: number;
+  name: string;
+  amount: number;
+  billing_cycle: "monthly" | "yearly";
+  billing_cycle_label: string;
+  next_billing_date: string;
+  status: "active" | "paused";
+  status_label: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  project?: Project;
+}
+
 interface Pagination {
   current_page: number;
   last_page: number;
@@ -49,6 +65,12 @@ interface ProjectFilters {
   status?: string;
   sort_by?: string;
   sort_order?: string;
+}
+
+interface RecurringServiceFilters {
+  project_id?: number;
+  status?: string;
+  billing_cycle?: string;
 }
 
 interface CreateClientData {
@@ -89,6 +111,26 @@ interface UpdateProjectData {
   description?: string | null;
 }
 
+interface CreateRecurringServiceData {
+  project_id: number;
+  name: string;
+  amount: number;
+  billing_cycle: "monthly" | "yearly";
+  next_billing_date: string;
+  status?: "active" | "paused";
+  description?: string | null;
+}
+
+interface UpdateRecurringServiceData {
+  project_id?: number;
+  name?: string;
+  amount?: number;
+  billing_cycle?: "monthly" | "yearly";
+  next_billing_date?: string;
+  status?: "active" | "paused";
+  description?: string | null;
+}
+
 interface ClientState {
   // Clients
   clients: Client[];
@@ -102,6 +144,12 @@ interface ClientState {
   currentProject: (Project & { client: Client }) | null;
   projectsLoading: boolean;
   projectsPagination: Pagination;
+  
+  // Recurring Services
+  recurringServices: RecurringService[];
+  currentRecurringService: RecurringService | null;
+  recurringServicesLoading: boolean;
+  recurringServicesPagination: Pagination;
   
   error: string | null;
   
@@ -120,6 +168,15 @@ interface ClientState {
   updateProject: (id: number, data: UpdateProjectData) => Promise<Project>;
   deleteProject: (id: number) => Promise<void>;
   fetchProjectsByClient: (clientId: number, page?: number, perPage?: number) => Promise<void>;
+  
+  // Recurring Service actions
+  fetchRecurringServices: (page?: number, perPage?: number, filters?: RecurringServiceFilters) => Promise<void>;
+  fetchRecurringService: (id: number) => Promise<void>;
+  createRecurringService: (data: CreateRecurringServiceData) => Promise<RecurringService>;
+  updateRecurringService: (id: number, data: UpdateRecurringServiceData) => Promise<RecurringService>;
+  deleteRecurringService: (id: number) => Promise<void>;
+  toggleRecurringServiceStatus: (id: number) => Promise<RecurringService>;
+  fetchRecurringServicesByProject: (projectId: number, page?: number, perPage?: number) => Promise<void>;
 }
 
 export const useClientStore = create<ClientState>((set) => ({
@@ -134,6 +191,11 @@ export const useClientStore = create<ClientState>((set) => ({
   currentProject: null,
   projectsLoading: false,
   projectsPagination: { current_page: 1, last_page: 1, total: 0, per_page: 25 },
+  
+  recurringServices: [],
+  currentRecurringService: null,
+  recurringServicesLoading: false,
+  recurringServicesPagination: { current_page: 1, last_page: 1, total: 0, per_page: 25 },
   
   error: null,
 
@@ -402,6 +464,153 @@ export const useClientStore = create<ClientState>((set) => ({
       set({
         error: error.response?.data?.error || "Error al cargar proyectos del cliente",
         projectsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // Recurring Service actions
+  fetchRecurringServices: async (page = 1, perPage = 25, filters = {}) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        per_page: String(perPage),
+        ...(filters.project_id && { project_id: String(filters.project_id) }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.billing_cycle && { billing_cycle: filters.billing_cycle }),
+      });
+      
+      const response = await api.get(`/api/v1/recurring-services?${params}`);
+      set({
+        recurringServices: response.data.data,
+        recurringServicesPagination: {
+          current_page: response.data.meta.current_page,
+          last_page: response.data.meta.last_page,
+          total: response.data.meta.total,
+          per_page: response.data.meta.per_page,
+        },
+        recurringServicesLoading: false,
+      });
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al cargar servicios recurrentes",
+        recurringServicesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  fetchRecurringService: async (id: number) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      const response = await api.get(`/api/v1/recurring-services/${id}`);
+      set({ currentRecurringService: response.data, recurringServicesLoading: false });
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al cargar servicio recurrente",
+        recurringServicesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  createRecurringService: async (data: CreateRecurringServiceData) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      const response = await api.post("/api/v1/recurring-services", data);
+      set((state) => ({
+        recurringServices: [response.data, ...state.recurringServices],
+        recurringServicesLoading: false,
+      }));
+      return response.data;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al crear servicio recurrente",
+        recurringServicesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  updateRecurringService: async (id: number, data: UpdateRecurringServiceData) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      const response = await api.put(`/api/v1/recurring-services/${id}`, data);
+      set((state) => ({
+        recurringServices: state.recurringServices.map((s) => (s.id === id ? response.data : s)),
+        currentRecurringService: state.currentRecurringService?.id === id ? response.data : state.currentRecurringService,
+        recurringServicesLoading: false,
+      }));
+      return response.data;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al actualizar servicio recurrente",
+        recurringServicesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  deleteRecurringService: async (id: number) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      await api.delete(`/api/v1/recurring-services/${id}`);
+      set((state) => ({
+        recurringServices: state.recurringServices.filter((s) => s.id !== id),
+        recurringServicesLoading: false,
+      }));
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al eliminar servicio recurrente",
+        recurringServicesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  toggleRecurringServiceStatus: async (id: number) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      const response = await api.patch(`/api/v1/recurring-services/${id}/toggle-status`);
+      set((state) => ({
+        recurringServices: state.recurringServices.map((s) => (s.id === id ? response.data : s)),
+        currentRecurringService: state.currentRecurringService?.id === id ? response.data : state.currentRecurringService,
+        recurringServicesLoading: false,
+      }));
+      return response.data;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al cambiar estado del servicio",
+        recurringServicesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  fetchRecurringServicesByProject: async (projectId: number, page = 1, perPage = 25) => {
+    set({ recurringServicesLoading: true, error: null });
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        per_page: String(perPage),
+      });
+      
+      const response = await api.get(`/api/v1/projects/${projectId}/recurring-services?${params}`);
+      set({
+        recurringServices: response.data.data,
+        recurringServicesPagination: {
+          current_page: response.data.meta.current_page,
+          last_page: response.data.meta.last_page,
+          total: response.data.meta.total,
+          per_page: response.data.meta.per_page,
+        },
+        recurringServicesLoading: false,
+      });
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.error || "Error al cargar servicios del proyecto",
+        recurringServicesLoading: false,
       });
       throw error;
     }

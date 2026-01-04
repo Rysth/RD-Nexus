@@ -342,7 +342,14 @@ export default function ClientDetail() {
                       {projects.map((project) => (
                         <TableRow key={project.id}>
                           <TableCell className="font-medium">
-                            {project.name}
+                            <button
+                              onClick={() =>
+                                navigate(`/dashboard/projects/${project.id}`)
+                              }
+                              className="text-left hover:text-primary hover:underline"
+                            >
+                              {project.name}
+                            </button>
                           </TableCell>
                           <TableCell>
                             {project.production_url ? (

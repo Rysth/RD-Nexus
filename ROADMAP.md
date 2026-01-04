@@ -40,12 +40,12 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 **Objetivo**: definir cobros recurrentes por proyecto.
 
 - DB/Modelos
-  - [ ] Migration `recurring_services` (project_id, name, amount, billing_cycle monthly/yearly, next_billing_date, status active/paused, timestamps)
+  - [x] Migration `recurring_services` (project_id, name, amount, billing_cycle monthly/yearly, next_billing_date, status active/paused, timestamps)
 - API
-  - [ ] CRUD de servicios recurrentes por proyecto
-  - [ ] Validaciones: amount > 0, fecha válida, ciclo permitido
+  - [x] CRUD de servicios recurrentes por proyecto
+  - [x] Validaciones: amount > 0, fecha válida, ciclo permitido
 - Frontend
-  - [ ] En detalle de proyecto: tab/section "Servicios Recurrentes" con crear/editar/pausar
+  - [x] En detalle de proyecto: tab/section "Servicios Recurrentes" con crear/editar/pausar
 - Done
   - [ ] Proyecto puede tener múltiples servicios recurrentes activos/pausados
 

@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
-import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Client from '#models/client'
+import RecurringService from '#models/recurring_service'
 
 export default class Project extends BaseModel {
   @column({ isPrimary: true })
@@ -37,6 +38,9 @@ export default class Project extends BaseModel {
   // Relations
   @belongsTo(() => Client)
   declare client: BelongsTo<typeof Client>
+
+  @hasMany(() => RecurringService)
+  declare recurringServices: HasMany<typeof RecurringService>
 
   // Computed: status label (Spanish)
   get statusLabel(): string {
