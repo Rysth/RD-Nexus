@@ -43,6 +43,16 @@ export default function DashboardLayout() {
       return { section: "Dashboard", page: "Clientes" };
     } else if (path.startsWith("/dashboard/clients/")) {
       return { section: "Clientes", page: "Detalle" };
+    } else if (path.startsWith("/dashboard/projects/")) {
+      return { section: "Proyectos", page: "Detalle" };
+    } else if (path === "/dashboard/quotes") {
+      return { section: "Dashboard", page: "Cotizaciones" };
+    } else if (path === "/dashboard/quotes/new") {
+      return { section: "Cotizaciones", page: "Nueva" };
+    } else if (path.match(/\/dashboard\/quotes\/\d+\/edit/)) {
+      return { section: "Cotizaciones", page: "Editar" };
+    } else if (path.startsWith("/dashboard/quotes/")) {
+      return { section: "Cotizaciones", page: "Detalle" };
     }
     return { section: "Dashboard", page: "Panel de Control" };
   };

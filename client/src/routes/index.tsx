@@ -10,6 +10,9 @@ import {
   ClientDetail,
   ProjectDetail,
 } from "../pages/dashboard/clients";
+import QuoteList from "../pages/dashboard/quotes/QuoteList";
+import QuoteForm from "../pages/dashboard/quotes/QuoteForm";
+import QuoteDetail from "../pages/dashboard/quotes/QuoteDetail";
 import AuthSignIn from "../pages/auth/AuthSignIn";
 import AuthSignUp from "../pages/auth/AuthSignUp";
 import AuthConfirm from "../pages/auth/AuthConfirm";
@@ -92,6 +95,38 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRoles={["admin", "manager"]}>
             <ProjectDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "quotes",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <QuoteList />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "quotes/new",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <QuoteForm mode="create" />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "quotes/:id",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <QuoteDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "quotes/:id/edit",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <QuoteForm mode="edit" />
           </ProtectedRoute>
         ),
       },

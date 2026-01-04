@@ -7,6 +7,7 @@ import {
   LogOut,
   ChevronsUpDown,
   Building2,
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -101,6 +102,12 @@ export default function AppSidebar({
         to: "/dashboard/clients",
         label: "Clientes",
         icon: Building2,
+        show: canManageUsers,
+      },
+      {
+        to: "/dashboard/quotes",
+        label: "Cotizaciones",
+        icon: FileText,
         show: canManageUsers,
       },
       {
