@@ -92,13 +92,6 @@ export default function ClientsIndex() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
-        <p className="text-muted-foreground">
-          Gestiona tus clientes y sus proyectos
-        </p>
-      </div>
-
       <ClientsDataTable
         columns={columns}
         data={clients}
