@@ -34,10 +34,6 @@ export const createClientsColumns = ({
     header: "Cliente",
     cell: ({ row }) => {
       const client = row.original;
-      const idCfg = idTypeConfig[client.identification_type] ?? {
-        label: client.identification_type,
-        className: "bg-gray-100 text-gray-800",
-      };
 
       return (
         <div className="flex flex-col gap-1">
