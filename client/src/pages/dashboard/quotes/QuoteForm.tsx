@@ -158,6 +158,8 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
   const selectedClientId = form.watch("client_id");
   useEffect(() => {
     if (selectedClientId && selectedClientId > 0) {
+      // Load projects from API scoped to the client to ensure only relevant projects appear
+      fetchProjectsByClient(selectedClientId, 1, 100);
       const filtered = projects.filter((p) => p.client_id === selectedClientId);
       setClientProjects(filtered);
     } else {
@@ -186,9 +188,9 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
   const total = subtotal + taxAmount;
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("es-GT", {
+    return new Intl.NumberFormat("es-EC", {
       style: "currency",
-      currency: "GTQ",
+      currency: "USD",
     }).format(value);
   };
 
