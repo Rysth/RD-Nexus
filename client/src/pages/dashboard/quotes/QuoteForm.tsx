@@ -326,9 +326,11 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
                     <FormLabel>Proyecto (opcional)</FormLabel>
                     <Select
                       onValueChange={(value) =>
-                        field.onChange(value ? parseInt(value) : null)
+                        field.onChange(
+                          value === "none" ? null : parseInt(value)
+                        )
                       }
-                      value={field.value ? String(field.value) : ""}
+                      value={field.value ? String(field.value) : "none"}
                       disabled={clientProjects.length === 0}
                     >
                       <FormControl>
@@ -343,7 +345,7 @@ export default function QuoteForm({ mode }: QuoteFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Sin proyecto</SelectItem>
+                        <SelectItem value="none">Sin proyecto</SelectItem>
                         {clientProjects.map((project) => (
                           <SelectItem
                             key={project.id}
