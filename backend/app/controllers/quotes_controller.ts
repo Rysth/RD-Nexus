@@ -563,15 +563,15 @@ export default class QuotesController {
     clientId?: number | null,
     projectId?: number | null
   ) {
-    await CacheService.deleteByPattern('quotes:index:*')
+    await CacheService.deleteMatched('quotes:index:*')
     await CacheService.delete(`quote:${quoteId}:show`)
 
     if (clientId) {
-      await CacheService.deleteByPattern(`client:${clientId}:*`)
+      await CacheService.deleteMatched(`client:${clientId}:*`)
     }
 
     if (projectId) {
-      await CacheService.deleteByPattern(`project:${projectId}:*`)
+      await CacheService.deleteMatched(`project:${projectId}:*`)
     }
   }
 }

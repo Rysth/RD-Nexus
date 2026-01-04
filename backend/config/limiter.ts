@@ -8,7 +8,8 @@ const limiterConfig = defineConfig({
    * Uses Redis in production for distributed rate limiting across multiple instances.
    * Falls back to memory in development/test for simplicity.
    */
-  default: env.get('NODE_ENV') === 'production' ? 'redis' : 'redis',
+  // Use Redis in production; default to in-memory during local/dev to avoid shared limits while iterating
+  default: env.get('NODE_ENV') === 'production' ? 'redis' : 'memory',
 
   stores: {
     /**
