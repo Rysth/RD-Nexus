@@ -1,6 +1,13 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-import { Home, Users, Settings, LogOut, ChevronsUpDown } from "lucide-react";
+import {
+  Home,
+  Users,
+  Settings,
+  LogOut,
+  ChevronsUpDown,
+  Building2,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -89,6 +96,12 @@ export default function AppSidebar({
         icon: Home,
         show: true,
         end: true,
+      },
+      {
+        to: "/dashboard/clients",
+        label: "Clientes",
+        icon: Building2,
+        show: canManageUsers,
       },
       {
         to: "/dashboard/users",

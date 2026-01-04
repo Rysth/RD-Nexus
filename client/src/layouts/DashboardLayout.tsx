@@ -39,6 +39,10 @@ export default function DashboardLayout() {
       return { section: "Dashboard", page: "Usuarios" };
     } else if (path === "/dashboard/business") {
       return { section: "Dashboard", page: "Configuración" };
+    } else if (path === "/dashboard/clients") {
+      return { section: "Dashboard", page: "Clientes" };
+    } else if (path.startsWith("/dashboard/clients/")) {
+      return { section: "Clientes", page: "Detalle" };
     }
     return { section: "Dashboard", page: "Panel de Control" };
   };

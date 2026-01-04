@@ -22,6 +22,8 @@ import {
 const AuthController = () => import('#controllers/auth_controller')
 const UsersController = () => import('#controllers/users_controller')
 const BusinessesController = () => import('#controllers/businesses_controller')
+const ClientsController = () => import('#controllers/clients_controller')
+const ProjectsController = () => import('#controllers/projects_controller')
 
 // Health check
 router.get('/', async () => {
@@ -84,6 +86,29 @@ router
             router.put('/:id/update_password', [UsersController, 'updatePassword']).use(sensitiveThrottle)
           })
           .prefix('/users')
+
+        // Clients management
+        router
+          .group(() => {
+            router.get('/', [ClientsController, 'index'])
+            router.post('/', [ClientsController, 'store']).use(sensitiveThrottle)
+            router.get('/:id', [ClientsController, 'show'])
+            router.put('/:id', [ClientsController, 'update']).use(sensitiveThrottle)
+            router.delete('/:id', [ClientsController, 'destroy']).use(sensitiveThrottle)
+            router.get('/:clientId/projects', [ProjectsController, 'byClient'])
+          })
+          .prefix('/clients')
+
+        // Projects management
+        router
+          .group(() => {
+            router.get('/', [ProjectsController, 'index'])
+            router.post('/', [ProjectsController, 'store']).use(sensitiveThrottle)
+            router.get('/:id', [ProjectsController, 'show'])
+            router.put('/:id', [ProjectsController, 'update']).use(sensitiveThrottle)
+            router.delete('/:id', [ProjectsController, 'destroy']).use(sensitiveThrottle)
+          })
+          .prefix('/projects')
       })
       .use(middleware.auth())
   })

@@ -21,18 +21,18 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 **Objetivo**: saber quién es el cliente y qué proyecto/software tiene.
 
 - DB/Modelos
-  - [ ] Migration `clients` (name, identification_type 04/05/06, identification, email, phone, address, timestamps)
-  - [ ] Migration `projects` (client_id, name, production_url, start_date, status active/maintenance/canceled, timestamps)
-  - [ ] Relaciones Lucid: `Client` hasMany `Project`, `Project` belongsTo `Client`
+  - [x] Migration `clients` (name, identification_type 04/05/06, identification, email, phone, address, timestamps)
+  - [x] Migration `projects` (client_id, name, production_url, start_date, status active/maintenance/canceled, timestamps)
+  - [x] Relaciones Lucid: `Client` hasMany `Project`, `Project` belongsTo `Client`
 - API
-  - [ ] CRUD clients
-  - [ ] CRUD projects
-  - [ ] Listar projects por client
+  - [x] CRUD clients
+  - [x] CRUD projects
+  - [x] Listar projects por client
 - Frontend
-  - [ ] Lista de clientes
-  - [ ] Detalle de cliente con proyectos
+  - [x] Lista de clientes
+  - [x] Detalle de cliente con proyectos
 - Done
-  - [ ] Crear cliente + asignar proyectos desde UI funciona
+  - [x] Crear cliente + asignar proyectos desde UI funciona
 
 ---
 
