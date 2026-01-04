@@ -61,7 +61,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500",
@@ -168,8 +175,14 @@ export default function QuoteList() {
 
   const handleStatusUpdate = async (quote: Quote, newStatus: string) => {
     try {
-      await updateQuoteStatus(quote.id, newStatus);
-      toast.success(`Estado cambiado a ${newStatus}`);
+      const updated = await updateQuoteStatus(quote.id, newStatus);
+      toast.success(`Estado cambiado a ${updated.status_label}`);
+      // Refetch to update the list
+      const page = parseInt(searchParams.get("page") || "1");
+      const filters: any = {};
+      if (statusFilter) filters.status = statusFilter;
+      if (clientFilter) filters.client_id = parseInt(clientFilter);
+      fetchQuotes(page, 25, filters);
     } catch {
       toast.error("Error al cambiar estado");
     }
@@ -186,9 +199,9 @@ export default function QuoteList() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("es-GT", {
+    return new Intl.NumberFormat("es-EC", {
       style: "currency",
-      currency: "GTQ",
+      currency: "USD",
     }).format(value);
   };
 
@@ -481,15 +494,70 @@ export default function QuoteList() {
                 </TableBody>
               </Table>
 
-              <div className="mt-4">
-                <DataTablePagination
-                  currentPage={quotesPagination.current_page}
-                  lastPage={quotesPagination.last_page}
-                  total={quotesPagination.total}
-                  perPage={quotesPagination.per_page}
-                  onPageChange={handlePageChange}
-                />
-              </div>
+              {quotesPagination.last_page > 1 && (
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando{" "}
+                    {(quotesPagination.current_page - 1) *
+                      quotesPagination.per_page +
+                      1}{" "}
+                    a{" "}
+                    {Math.min(
+                      quotesPagination.current_page * quotesPagination.per_page,
+                      quotesPagination.total
+                    )}{" "}
+                    de {quotesPagination.total} resultados
+                  </p>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            handlePageChange(quotesPagination.current_page - 1)
+                          }
+                          className={
+                            quotesPagination.current_page === 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                      {Array.from(
+                        { length: Math.min(5, quotesPagination.last_page) },
+                        (_, i) => {
+                          const page = i + 1;
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => handlePageChange(page)}
+                                isActive={
+                                  quotesPagination.current_page === page
+                                }
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            handlePageChange(quotesPagination.current_page + 1)
+                          }
+                          className={
+                            quotesPagination.current_page ===
+                            quotesPagination.last_page
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </>
           )}
         </CardContent>

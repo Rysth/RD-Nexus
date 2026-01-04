@@ -216,7 +216,10 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         status,
       });
       set((state) => ({
-        quotes: state.quotes.map((q) => (q.id === id ? response.data : q)),
+        // Be defensive in case the API returns ids as strings
+        quotes: state.quotes.map((q) =>
+          String(q.id) === String(id) ? response.data : q
+        ),
         // Be defensive in case the API returns ids as strings
         currentQuote:
           String(state.currentQuote?.id) === String(id) ? response.data : state.currentQuote,
