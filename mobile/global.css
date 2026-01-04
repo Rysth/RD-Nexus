@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font Families */
+@layer base {
+  * {
+    font-family: 'Inter_400Regular', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Theme Colors */
+@layer base {
+  :root {
+    /* Primary Colors (Blue) */
+    --color-primary: 59 130 246; /* #3B82F6 */
+    --color-primary-light: 96 165 250; /* #60A5FA */
+    --color-primary-dark: 37 99 235; /* #2563EB */
+
+    /* Secondary Colors (Green) */
+    --color-secondary: 16 185 129; /* #10B981 */
+    --color-secondary-light: 52 211 153; /* #34D399 */
+    --color-secondary-dark: 5 150 105; /* #059669 */
+
+    /* Success */
+    --color-success: 34 197 94; /* #22C55E */
+    --color-success-light: 74 222 128; /* #4ADE80 */
+
+    /* Warning */
+    --color-warning: 251 191 36; /* #FBBF24 */
+    --color-warning-light: 252 211 77; /* #FCD34D */
+
+    /* Error */
+    --color-error: 239 68 68; /* #EF4444 */
+    --color-error-light: 248 113 113; /* #F87171 */
+
+    /* Neutral Colors */
+    --color-white: 255 255 255; /* #FFFFFF */
+    --color-black: 0 0 0; /* #000000 */
+
+    /* Gray Scale */
+    --color-gray-50: 249 250 251; /* #F9FAFB */
+    --color-gray-100: 243 244 246; /* #F3F4F6 */
+    --color-gray-200: 229 231 235; /* #E5E7EB */
+    --color-gray-300: 209 213 219; /* #D1D5DB */
+    --color-gray-400: 156 163 175; /* #9CA3AF */
+    --color-gray-500: 107 114 128; /* #6B7280 */
+    --color-gray-600: 75 85 99; /* #4B5563 */
+    --color-gray-700: 55 65 81; /* #374151 */
+    --color-gray-800: 31 41 55; /* #1F2937 */
+    --color-gray-900: 17 24 39; /* #111827 */
+
+    /* Background */
+    --color-background: 249 250 251; /* #F9FAFB */
+    --color-surface: 255 255 255; /* #FFFFFF */
+
+    /* Text */
+    --color-text-primary: 17 24 39; /* #111827 */
+    --color-text-secondary: 107 114 128; /* #6B7280 */
+    --color-text-disabled: 156 163 175; /* #9CA3AF */
+  }
+}

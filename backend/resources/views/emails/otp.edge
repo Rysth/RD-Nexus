@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Código de verificación</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+      <div style="background-color: #ffffff; padding: 32px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+        <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 16px;">🔐 Código de Verificación</h2>
+        
+        <p style="color: #4b5563; margin-bottom: 16px;">Hola{{ user.fullName ? ` ${user.fullName}` : '' }},</p>
+        
+        <p style="color: #4b5563; margin-bottom: 24px;">Para completar tu inicio de sesión en <strong>MicroBiz</strong>, usa el siguiente código de verificación:</p>
+        
+        <div style="background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1e40af; font-family: 'Courier New', monospace;">{{ code }}</div>
+        </div>
+        
+        <div style="background-color: #fefce8; border-left: 4px solid #eab308; padding: 16px; margin-bottom: 16px; border-radius: 4px;">
+          <p style="font-size: 14px; color: #374151; margin: 0;">
+            <strong>⏰ Importante:</strong> Este código expira en 10 minutos. Si no lo usas dentro de este tiempo, deberás solicitar uno nuevo.
+          </p>
+        </div>
+        
+        <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+          <p style="font-size: 14px; color: #374151; margin: 0;">
+            <strong>🔒 Seguridad:</strong> Si no solicitaste este código, ignora este correo. Nunca compartas este código con nadie.
+          </p>
+        </div>
+        
+        <p style="font-size: 14px; color: #6b7280;">Si tienes problemas, contacta a nuestro equipo de soporte.</p>
+        
+        <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center;">
+          <p style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Este correo fue enviado de manera automática.</p>
+          <p style="font-size: 12px; color: #6b7280; margin: 0;">Creado por RysthDesign - <a href="https://rysthdesign.com/" style="color: #3b82f6; text-decoration: none;">https://rysthdesign.com/</a></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

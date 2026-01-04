@@ -1,0 +1,11 @@
+¡Bienvenido a MicroBiz!
+
+Hola{{ user.fullName ? ` ${user.fullName}` : '' }},
+
+Has sido invitado a unirte a MicroBiz.
+Crea tu contraseña y accede aquí:
+{{ frontendUrl }}/auth/reset-password?key={{ token }}
+
+Este enlace expira en 24 horas. Si no esperabas esta invitación, puedes ignorar este correo.
+
+Creado por RysthDesign - https://rysthdesign.com/
