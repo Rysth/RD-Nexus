@@ -1,6 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Client from '#models/client'
+import CacheService from '#services/cache_service'
 import vine from '@vinejs/vine'
+
+// Cache TTLs (seconds)
+const CACHE_TTL = {
+  INDEX: 300,
+  SHOW: 600,
+}
 
 // Validators
 const createClientValidator = vine.compile(
@@ -39,35 +46,53 @@ export default class ClientsController {
     const sortBy = request.input('sort_by', 'created_at')
     const sortOrder = request.input('sort_order', 'desc')
 
-    let query = Client.query()
+    const cacheKeyParams = [
+      `page:${page}`,
+      `per_page:${perPage}`,
+      `search:${search}`,
+      `sort_by:${sortBy}`,
+      `sort_order:${sortOrder}`,
+    ].join(':')
 
-    // Search by name, identification, or email
-    if (search) {
-      query = query.where((builder) => {
-        builder
-          .whereILike('name', `%${search}%`)
-          .orWhereILike('identification', `%${search}%`)
-          .orWhereILike('email', `%${search}%`)
-      })
-    }
+    const cacheKey = `clients:index:${cacheKeyParams}`
 
-    // Sorting
-    const allowedSortFields = ['name', 'identification', 'created_at', 'updated_at']
-    if (allowedSortFields.includes(sortBy)) {
-      query = query.orderBy(sortBy, sortOrder === 'asc' ? 'asc' : 'desc')
-    }
+    const payload = await CacheService.fetch(
+      cacheKey,
+      async () => {
+        let query = Client.query()
 
-    const clients = await query.paginate(page, perPage)
+        // Search by name, identification, or email
+        if (search) {
+          query = query.where((builder) => {
+            builder
+              .whereILike('name', `%${search}%`)
+              .orWhereILike('identification', `%${search}%`)
+              .orWhereILike('email', `%${search}%`)
+          })
+        }
 
-    return response.ok({
-      data: clients.all().map((c) => c.serializeForApi()),
-      meta: {
-        total: clients.total,
-        per_page: clients.perPage,
-        current_page: clients.currentPage,
-        last_page: clients.lastPage,
+        // Sorting
+        const allowedSortFields = ['name', 'identification', 'created_at', 'updated_at']
+        if (allowedSortFields.includes(sortBy)) {
+          query = query.orderBy(sortBy, sortOrder === 'asc' ? 'asc' : 'desc')
+        }
+
+        const clients = await query.paginate(page, perPage)
+
+        return {
+          data: clients.all().map((c) => c.serializeForApi()),
+          meta: {
+            total: clients.total,
+            per_page: clients.perPage,
+            current_page: clients.currentPage,
+            last_page: clients.lastPage,
+          },
+        }
       },
-    })
+      CACHE_TTL.INDEX
+    )
+
+    return response.ok(payload)
   }
 
   /**
@@ -75,19 +100,34 @@ export default class ClientsController {
    * Show a single client with projects
    */
   async show({ params, response }: HttpContext) {
-    const client = await Client.query()
-      .where('id', params.id)
-      .preload('projects')
-      .first()
+    const clientId = params.id
+    const cacheKey = `client:${clientId}:show`
 
-    if (!client) {
+    const clientData = await CacheService.fetch(
+      cacheKey,
+      async () => {
+        const client = await Client.query()
+          .where('id', clientId)
+          .preload('projects')
+          .first()
+
+        if (!client) {
+          return null
+        }
+
+        return {
+          ...client.serializeForApi(),
+          projects: client.projects.map((p) => p.serializeForApi()),
+        }
+      },
+      CACHE_TTL.SHOW
+    )
+
+    if (!clientData) {
       return response.notFound({ error: 'Cliente no encontrado' })
     }
 
-    return response.ok({
-      ...client.serializeForApi(),
-      projects: client.projects.map((p) => p.serializeForApi()),
-    })
+    return response.ok(clientData)
   }
 
   /**
@@ -114,6 +154,8 @@ export default class ClientsController {
       address: data.address || null,
       notes: data.notes || null,
     })
+
+    await CacheService.invalidateClients(client.id)
 
     return response.created(client.serializeForApi())
   }
@@ -157,6 +199,8 @@ export default class ClientsController {
 
     await client.save()
 
+    await CacheService.invalidateClients(client.id)
+
     return response.ok(client.serializeForApi())
   }
 
@@ -172,6 +216,8 @@ export default class ClientsController {
     }
 
     await client.delete()
+
+    await CacheService.invalidateClients(client.id)
 
     return response.ok({ message: 'Cliente eliminado correctamente' })
   }

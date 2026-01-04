@@ -25,11 +25,13 @@ export default function ClientDelete({
   onSuccess,
 }: ClientDeleteProps) {
   const { deleteClient, clientsLoading } = useClientStore();
+  const [confirmText, setConfirmText] = useState("");
 
   const handleDelete = async () => {
     try {
       await deleteClient(client.id);
-      toast.success("Cliente eliminado correctamente");
+      toast.success(`Cliente ${client.name} eliminado correctamente`);
+      setConfirmText("");
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
@@ -37,23 +39,88 @@ export default function ClientDelete({
     }
   };
 
+  const handleClose = () => {
+    setConfirmText("");
+    onOpenChange(false);
+  };
+
+  const isConfirmValid = confirmText === client.name;
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+    <AlertDialog open={open} onOpenChange={handleClose}>
+      <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar cliente?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta acción no se puede deshacer. Se eliminará permanentemente el
-            cliente <strong>{client.name}</strong> y todos sus proyectos
-            asociados.
+          <AlertDialogTitle className="text-destructive">
+            Eliminar Cliente
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4">
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <div className="flex items-start space-x-2">
+                  <div className="text-destructive mt-0.5">!</div>
+                  <div>
+                    <h4 className="font-semibold text-destructive">
+                      Advertencia
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Esta acción no se puede deshacer. Se eliminarán el cliente
+                      y sus proyectos asociados.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-muted rounded-md">
+                <p className="font-medium mb-2">Cliente a eliminar:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="font-semibold">Nombre:</span> {client.name}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Identificación:</span>{" "}
+                    {client.identification}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Tipo:</span>
+                    <Badge variant="outline">
+                      {client.identification_type}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Email:</span>{" "}
+                    {client.email || "—"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-name">
+                  Para confirmar, escribe el nombre del cliente:
+                  <span className="ml-1 font-semibold">{client.name}</span>
+                </Label>
+                <Input
+                  id="confirm-name"
+                  type="text"
+                  placeholder={client.name}
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  disabled={clientsLoading}
+                />
+                {!isConfirmValid && confirmText.length > 0 && (
+                  <p className="text-xs text-destructive">
+                    El nombre no coincide con "{client.name}"
+                  </p>
+                )}
+              </div>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleClose}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            disabled={clientsLoading}
-            className="bg-red-600 hover:bg-red-700"
+            disabled={!isConfirmValid || clientsLoading}
+            className="bg-red-600 text-white hover:bg-red-700"
           >
             {clientsLoading ? "Eliminando..." : "Eliminar"}
           </AlertDialogAction>

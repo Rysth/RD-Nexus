@@ -135,4 +135,31 @@ export default class CacheService {
       await this.delete(`business:${businessId}`)
     }
   }
+
+  /**
+   * Invalidate client-related caches
+   */
+  static async invalidateClients(clientId?: number): Promise<void> {
+    await this.deleteMatched('clients:index:*')
+    if (clientId) {
+      await this.deleteMatched(`client:${clientId}:*`)
+      await this.deleteMatched(`client:${clientId}:projects:*`)
+    }
+  }
+
+  /**
+   * Invalidate project-related caches
+   */
+  static async invalidateProjects(projectId?: number, clientId?: number): Promise<void> {
+    await this.deleteMatched('projects:index:*')
+
+    if (projectId) {
+      await this.deleteMatched(`project:${projectId}:*`)
+    }
+
+    if (clientId) {
+      await this.deleteMatched(`client:${clientId}:projects:*`)
+      await this.deleteMatched(`client:${clientId}:show`)
+    }
+  }
 }

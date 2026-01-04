@@ -1,7 +1,14 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Project from '#models/project'
 import Client from '#models/client'
+import CacheService from '#services/cache_service'
 import vine from '@vinejs/vine'
+
+// Cache TTLs (seconds)
+const CACHE_TTL = {
+  INDEX: 300,
+  SHOW: 600,
+}
 
 // Validators
 const createProjectValidator = vine.compile(
@@ -40,47 +47,67 @@ export default class ProjectsController {
     const sortBy = request.input('sort_by', 'created_at')
     const sortOrder = request.input('sort_order', 'desc')
 
-    let query = Project.query().preload('client')
+    const cacheKeyParams = [
+      `page:${page}`,
+      `per_page:${perPage}`,
+      `search:${search}`,
+      `client_id:${clientId ?? ''}`,
+      `status:${status ?? ''}`,
+      `sort_by:${sortBy}`,
+      `sort_order:${sortOrder}`,
+    ].join(':')
 
-    // Filter by client
-    if (clientId) {
-      query = query.where('client_id', clientId)
-    }
+    const cacheKey = `projects:index:${cacheKeyParams}`
 
-    // Filter by status
-    if (status && ['active', 'maintenance', 'canceled'].includes(status)) {
-      query = query.where('status', status)
-    }
+    const payload = await CacheService.fetch(
+      cacheKey,
+      async () => {
+        let query = Project.query().preload('client')
 
-    // Search by name or URL
-    if (search) {
-      query = query.where((builder) => {
-        builder
-          .whereILike('name', `%${search}%`)
-          .orWhereILike('production_url', `%${search}%`)
-      })
-    }
+        // Filter by client
+        if (clientId) {
+          query = query.where('client_id', clientId)
+        }
 
-    // Sorting
-    const allowedSortFields = ['name', 'status', 'start_date', 'created_at', 'updated_at']
-    if (allowedSortFields.includes(sortBy)) {
-      query = query.orderBy(sortBy, sortOrder === 'asc' ? 'asc' : 'desc')
-    }
+        // Filter by status
+        if (status && ['active', 'maintenance', 'canceled'].includes(status)) {
+          query = query.where('status', status)
+        }
 
-    const projects = await query.paginate(page, perPage)
+        // Search by name or URL
+        if (search) {
+          query = query.where((builder) => {
+            builder
+              .whereILike('name', `%${search}%`)
+              .orWhereILike('production_url', `%${search}%`)
+          })
+        }
 
-    return response.ok({
-      data: projects.all().map((p) => ({
-        ...p.serializeForApi(),
-        client: p.client?.serializeForApi(),
-      })),
-      meta: {
-        total: projects.total,
-        per_page: projects.perPage,
-        current_page: projects.currentPage,
-        last_page: projects.lastPage,
+        // Sorting
+        const allowedSortFields = ['name', 'status', 'start_date', 'created_at', 'updated_at']
+        if (allowedSortFields.includes(sortBy)) {
+          query = query.orderBy(sortBy, sortOrder === 'asc' ? 'asc' : 'desc')
+        }
+
+        const projects = await query.paginate(page, perPage)
+
+        return {
+          data: projects.all().map((p) => ({
+            ...p.serializeForApi(),
+            client: p.client?.serializeForApi(),
+          })),
+          meta: {
+            total: projects.total,
+            per_page: projects.perPage,
+            current_page: projects.currentPage,
+            last_page: projects.lastPage,
+          },
+        }
       },
-    })
+      CACHE_TTL.INDEX
+    )
+
+    return response.ok(payload)
   }
 
   /**
@@ -88,19 +115,34 @@ export default class ProjectsController {
    * Show a single project with client info
    */
   async show({ params, response }: HttpContext) {
-    const project = await Project.query()
-      .where('id', params.id)
-      .preload('client')
-      .first()
+    const projectId = params.id
+    const cacheKey = `project:${projectId}:show`
 
-    if (!project) {
+    const projectData = await CacheService.fetch(
+      cacheKey,
+      async () => {
+        const project = await Project.query()
+          .where('id', projectId)
+          .preload('client')
+          .first()
+
+        if (!project) {
+          return null
+        }
+
+        return {
+          ...project.serializeForApi(),
+          client: project.client?.serializeForApi(),
+        }
+      },
+      CACHE_TTL.SHOW
+    )
+
+    if (!projectData) {
       return response.notFound({ error: 'Proyecto no encontrado' })
     }
 
-    return response.ok({
-      ...project.serializeForApi(),
-      client: project.client?.serializeForApi(),
-    })
+    return response.ok(projectData)
   }
 
   /**
@@ -126,6 +168,8 @@ export default class ProjectsController {
     })
 
     await project.load('client')
+
+    await CacheService.invalidateProjects(project.id, data.client_id)
 
     return response.created({
       ...project.serializeForApi(),
@@ -166,6 +210,8 @@ export default class ProjectsController {
     await project.save()
     await project.load('client')
 
+    await CacheService.invalidateProjects(project.id, project.clientId)
+
     return response.ok({
       ...project.serializeForApi(),
       client: project.client?.serializeForApi(),
@@ -185,6 +231,8 @@ export default class ProjectsController {
 
     await project.delete()
 
+    await CacheService.invalidateProjects(project.id, project.clientId)
+
     return response.ok({ message: 'Proyecto eliminado correctamente' })
   }
 
@@ -203,23 +251,40 @@ export default class ProjectsController {
     const perPage = request.input('per_page', 25)
     const status = request.input('status')
 
-    let query = Project.query().where('client_id', params.clientId)
+    const cacheKeyParams = [
+      `client:${params.clientId}`,
+      `page:${page}`,
+      `per_page:${perPage}`,
+      `status:${status ?? ''}`,
+    ].join(':')
 
-    if (status && ['active', 'maintenance', 'canceled'].includes(status)) {
-      query = query.where('status', status)
-    }
+    const cacheKey = `client:${params.clientId}:projects:${cacheKeyParams}`
 
-    const projects = await query.orderBy('created_at', 'desc').paginate(page, perPage)
+    const payload = await CacheService.fetch(
+      cacheKey,
+      async () => {
+        let query = Project.query().where('client_id', params.clientId)
 
-    return response.ok({
-      client: client.serializeForApi(),
-      data: projects.all().map((p) => p.serializeForApi()),
-      meta: {
-        total: projects.total,
-        per_page: projects.perPage,
-        current_page: projects.currentPage,
-        last_page: projects.lastPage,
+        if (status && ['active', 'maintenance', 'canceled'].includes(status)) {
+          query = query.where('status', status)
+        }
+
+        const projects = await query.orderBy('created_at', 'desc').paginate(page, perPage)
+
+        return {
+          client: client.serializeForApi(),
+          data: projects.all().map((p) => p.serializeForApi()),
+          meta: {
+            total: projects.total,
+            per_page: projects.perPage,
+            current_page: projects.currentPage,
+            last_page: projects.lastPage,
+          },
+        }
       },
-    })
+      CACHE_TTL.INDEX
+    )
+
+    return response.ok(payload)
   }
 }

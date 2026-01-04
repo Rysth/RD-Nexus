@@ -20,10 +20,10 @@ export default class extends BaseSchema {
       table.string('name', 200).notNullable()
       table.string('production_url', 500).nullable()
       table.date('start_date').nullable()
-      
+
       // Status: active, maintenance, canceled
       table.string('status', 20).notNullable().defaultTo('active')
-      
+
       // Description/notes
       table.text('description').nullable()
 
