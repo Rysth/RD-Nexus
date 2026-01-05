@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,10 +66,10 @@ const statusColors: Record<string, string> = {
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
-  draft: <FileText className="h-3 w-3" />,
-  sent: <Send className="h-3 w-3" />,
-  approved: <CheckCircle className="h-3 w-3" />,
-  rejected: <XCircle className="h-3 w-3" />,
+  draft: <FileText className="w-3 h-3" />,
+  sent: <Send className="w-3 h-3" />,
+  approved: <CheckCircle className="w-3 h-3" />,
+  rejected: <XCircle className="w-3 h-3" />,
 };
 
 export default function QuoteList() {
@@ -162,9 +162,9 @@ export default function QuoteList() {
     if (!quoteToDelete) return;
     try {
       await deleteQuote(quoteToDelete.id);
-      toast.success("Cotización eliminada exitosamente");
+      // Toast is shown in the store
     } catch {
-      toast.error("Error al eliminar cotización");
+      // Toast is shown in the store
     } finally {
       setDeleteDialogOpen(false);
       setQuoteToDelete(null);
@@ -173,20 +173,19 @@ export default function QuoteList() {
 
   const handleStatusUpdate = async (quote: Quote, newStatus: string) => {
     try {
-      const updated = await updateQuoteStatus(quote.id, newStatus);
-      toast.success(`Estado cambiado a ${updated.status_label}`);
+      await updateQuoteStatus(quote.id, newStatus);
+      // Toast is shown in the store
     } catch {
-      toast.error("Error al cambiar estado");
+      // Toast is shown in the store
     }
   };
 
   const handleDuplicate = async (quote: Quote) => {
     try {
       const newQuote = await duplicateQuote(quote.id);
-      toast.success("Cotización duplicada exitosamente");
       navigate(`/dashboard/quotes/${newQuote.id}`);
     } catch {
-      toast.error("Error al duplicar cotización");
+      // Toast is shown in the store
     }
   };
 
@@ -215,9 +214,9 @@ export default function QuoteList() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalQuotes}</div>
@@ -225,9 +224,9 @@ export default function QuoteList() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Borradores</CardTitle>
-            <Clock className="h-4 w-4 text-gray-500" />
+            <Clock className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{draftQuotes}</div>
@@ -235,9 +234,9 @@ export default function QuoteList() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Enviadas</CardTitle>
-            <Send className="h-4 w-4 text-blue-500" />
+            <Send className="w-4 h-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{sentQuotes}</div>
@@ -245,9 +244,9 @@ export default function QuoteList() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Aprobadas</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-500" />
+            <DollarSign className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvedQuotes}</div>
@@ -305,7 +304,7 @@ export default function QuoteList() {
       </div>
 
       <Button onClick={() => navigate("/dashboard/quotes/new")}>
-        <Plus className="mr-2 h-4 w-4" />
+        <Plus className="w-4 h-4 mr-2" />
         Nueva Cotización
       </Button>
 
@@ -318,8 +317,8 @@ export default function QuoteList() {
               <span className="ml-2">Cargando cotizaciones...</span>
             </div>
           ) : quotes.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+            <div className="py-8 text-center">
+              <FileText className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="mt-2 text-sm font-semibold">
                 No hay cotizaciones
               </h3>
@@ -330,7 +329,7 @@ export default function QuoteList() {
                 className="mt-4"
                 onClick={() => navigate("/dashboard/quotes/new")}
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="w-4 h-4 mr-2" />
                 Nueva Cotización
               </Button>
             </div>
@@ -367,7 +366,7 @@ export default function QuoteList() {
                           locale: es,
                         })}
                         {quote.is_expired && (
-                          <AlertCircle className="h-4 w-4 text-red-500" />
+                          <AlertCircle className="w-4 h-4 text-red-500" />
                         )}
                       </div>
                     </TableCell>
@@ -387,8 +386,8 @@ export default function QuoteList() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button variant="ghost" className="w-8 h-8 p-0">
+                            <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -397,7 +396,7 @@ export default function QuoteList() {
                               navigate(`/dashboard/quotes/${quote.id}`)
                             }
                           >
-                            <Eye className="mr-2 h-4 w-4" />
+                            <Eye className="w-4 h-4 mr-2" />
                             Ver detalle
                           </DropdownMenuItem>
                           {quote.is_editable && (
@@ -406,14 +405,14 @@ export default function QuoteList() {
                                 navigate(`/dashboard/quotes/${quote.id}/edit`)
                               }
                             >
-                              <Edit className="mr-2 h-4 w-4" />
+                              <Edit className="w-4 h-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
                             onClick={() => handleDuplicate(quote)}
                           >
-                            <Copy className="mr-2 h-4 w-4" />
+                            <Copy className="w-4 h-4 mr-2" />
                             Duplicar
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -423,7 +422,7 @@ export default function QuoteList() {
                             <DropdownMenuItem
                               onClick={() => handleStatusUpdate(quote, "sent")}
                             >
-                              <Send className="mr-2 h-4 w-4" />
+                              <Send className="w-4 h-4 mr-2" />
                               Marcar como Enviada
                             </DropdownMenuItem>
                           )}
@@ -434,7 +433,7 @@ export default function QuoteList() {
                                   handleStatusUpdate(quote, "approved")
                                 }
                               >
-                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
                                 Marcar como Aprobada
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -442,7 +441,7 @@ export default function QuoteList() {
                                   handleStatusUpdate(quote, "rejected")
                                 }
                               >
-                                <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                                <XCircle className="w-4 h-4 mr-2 text-red-500" />
                                 Marcar como Rechazada
                               </DropdownMenuItem>
                             </>
@@ -452,7 +451,7 @@ export default function QuoteList() {
                             <DropdownMenuItem
                               onClick={() => handleStatusUpdate(quote, "draft")}
                             >
-                              <FileText className="mr-2 h-4 w-4" />
+                              <FileText className="w-4 h-4 mr-2" />
                               Regresar a Borrador
                             </DropdownMenuItem>
                           )}
@@ -463,7 +462,7 @@ export default function QuoteList() {
                               onClick={() => handleDelete(quote)}
                               className="text-red-600"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 className="w-4 h-4 mr-2" />
                               Eliminar
                             </DropdownMenuItem>
                           )}

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useQuoteStore, QuoteItem } from "@/stores/quoteStore";
 import { useClientStore, Project } from "@/stores/clientStore";
 import { format, addDays } from "date-fns";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   Card,
   CardContent,

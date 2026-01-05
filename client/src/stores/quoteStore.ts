@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import api from "../utils/api";
 import type { Client, Project } from "./clientStore";
 
@@ -227,11 +227,14 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         currentQuote: state.currentQuote?.id === id ? null : state.currentQuote,
         quotesLoading: false,
       }));
+      toast.success("Cotización eliminada exitosamente");
     } catch (error: unknown) {
+      const errorMessage = (error as ApiError).response?.data?.error || "Error al eliminar cotización";
       set({
-        error: (error as ApiError).response?.data?.error || "Error al eliminar cotización",
+        error: errorMessage,
         quotesLoading: false,
       });
+      toast.error(errorMessage);
       throw error;
     }
   },
@@ -252,14 +255,17 @@ export const useQuoteStore = create<QuoteState>((set) => ({
           String(state.currentQuote?.id) === String(id) ? response.data : state.currentQuote,
         quotesLoading: false,
       }));
+      toast.success("Estado de cotización actualizado");
       return response.data;
     } catch (error: unknown) {
+      const errorMessage =
+        (error as ApiError).response?.data?.error ||
+        "Error al cambiar estado de cotización";
       set({
-        error:
-          (error as ApiError).response?.data?.error ||
-          "Error al cambiar estado de cotización",
+        error: errorMessage,
         quotesLoading: false,
       });
+      toast.error(errorMessage);
       throw error;
     }
   },
@@ -272,12 +278,15 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         quotes: [response.data, ...state.quotes],
         quotesLoading: false,
       }));
+      toast.success("Cotización duplicada exitosamente");
       return response.data;
     } catch (error: unknown) {
+      const errorMessage = (error as ApiError).response?.data?.error || "Error al duplicar cotización";
       set({
-        error: (error as ApiError).response?.data?.error || "Error al duplicar cotización",
+        error: errorMessage,
         quotesLoading: false,
       });
+      toast.error(errorMessage);
       throw error;
     }
   },

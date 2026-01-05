@@ -48,7 +48,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
 import { useBusinessStore } from "@/stores/businessStore";
 
@@ -104,10 +103,9 @@ export default function QuoteDetail() {
     if (!currentQuote) return;
     try {
       await deleteQuote(currentQuote.id);
-      toast.success("Cotización eliminada exitosamente");
       navigate("/dashboard/quotes");
     } catch {
-      toast.error("Error al eliminar cotización");
+      // Toast is shown in the store
     } finally {
       setDeleteDialogOpen(false);
     }
@@ -116,10 +114,10 @@ export default function QuoteDetail() {
   const handleStatusUpdate = async (newStatus: string) => {
     if (!currentQuote) return;
     try {
-      const updated = await updateQuoteStatus(currentQuote.id, newStatus);
-      toast.success(`Estado cambiado a ${updated.status_label}`);
+      await updateQuoteStatus(currentQuote.id, newStatus);
+      // Toast is shown in the store
     } catch {
-      toast.error("Error al cambiar estado");
+      // Toast is shown in the store
     }
   };
 
@@ -127,10 +125,9 @@ export default function QuoteDetail() {
     if (!currentQuote) return;
     try {
       const newQuote = await duplicateQuote(currentQuote.id);
-      toast.success("Cotización duplicada exitosamente");
       navigate(`/dashboard/quotes/${newQuote.id}`);
     } catch {
-      toast.error("Error al duplicar cotización");
+      // Toast is shown in the store
     }
   };
 
