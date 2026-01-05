@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import Client from '#models/client'
 import Project from '#models/project'
 import Quote from '#models/quote'
+import QuoteItem from '#models/quote_item'
 
 type ClientSeed = {
   key: string
@@ -33,9 +34,13 @@ type QuoteSeed = {
   issueDate: string
   validUntil: string
   status: 'draft' | 'sent' | 'approved' | 'rejected'
-  subtotal: number
   taxRate: number
   notes?: string | null
+  items: Array<{
+    description: string
+    quantity: number
+    unitPrice: number
+  }>
 }
 
 export default class ClientProjectQuoteSeeder extends BaseSeeder {
@@ -165,9 +170,13 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
         issueDate: '2026-01-02',
         validUntil: '2026-01-16',
         status: 'sent',
-        subtotal: 5500,
         taxRate: 15,
         notes: 'Incluye diseno responsivo y optimizacion SEO.',
+        items: [
+          { description: 'Diseno UI/UX responsivo', quantity: 1, unitPrice: 2500 },
+          { description: 'Desarrollo CMS headless', quantity: 1, unitPrice: 2500 },
+          { description: 'Optimización SEO y performance', quantity: 1, unitPrice: 500 },
+        ],
       },
       {
         clientKey: 'acme',
@@ -177,9 +186,12 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
         issueDate: '2026-01-03',
         validUntil: '2026-02-02',
         status: 'draft',
-        subtotal: 7200,
         taxRate: 15,
         notes: 'Incluye autenticacion SSO y facturacion electronica.',
+        items: [
+          { description: 'Implementacion SSO', quantity: 1, unitPrice: 5000 },
+          { description: 'Facturacion electronica (integracion)', quantity: 1, unitPrice: 2200 },
+        ],
       },
       {
         clientKey: 'globex',
@@ -189,9 +201,12 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
         issueDate: '2025-12-20',
         validUntil: '2026-01-03',
         status: 'approved',
-        subtotal: 9800,
         taxRate: 15,
         notes: 'Entrega por fases con panel de reportes.',
+        items: [
+          { description: 'Integracion API ERP (modulo principal)', quantity: 1, unitPrice: 6000 },
+          { description: 'Dashboard BI y reportes', quantity: 1, unitPrice: 3800 },
+        ],
       },
       {
         clientKey: 'initech',
@@ -201,9 +216,12 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
         issueDate: '2026-01-04',
         validUntil: '2026-01-18',
         status: 'sent',
-        subtotal: 8400,
         taxRate: 15,
         notes: 'Incluye pasarela de pagos y notificaciones.',
+        items: [
+          { description: 'Backend suscripciones (planes y pagos)', quantity: 1, unitPrice: 6400 },
+          { description: 'Notificaciones y webhooks', quantity: 1, unitPrice: 2000 },
+        ],
       },
       {
         clientKey: 'globex',
@@ -213,9 +231,9 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
         issueDate: '2026-01-05',
         validUntil: '2026-01-19',
         status: 'draft',
-        subtotal: 3000,
         taxRate: 0,
         notes: 'Horas de soporte trimestrales sin impuestos.',
+        items: [{ description: 'Horas de soporte (bolsa)', quantity: 30, unitPrice: 100 }],
       },
     ]
 
@@ -228,12 +246,16 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
 
       const project = data.projectKey ? projectMap.get(data.projectKey) : null
 
-      const subtotal = data.subtotal
+      const subtotal = Number(
+        data.items
+          .reduce((acc, item) => acc + Number(item.quantity) * Number(item.unitPrice), 0)
+          .toFixed(2)
+      )
       const taxRate = data.taxRate
       const taxAmount = Number((subtotal * (taxRate / 100)).toFixed(2))
       const total = Number((subtotal + taxAmount).toFixed(2))
 
-      await Quote.updateOrCreate(
+      const quote = await Quote.updateOrCreate(
         { quoteNumber: data.quoteNumber },
         {
           clientId: client.id,
@@ -250,6 +272,23 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
           notes: data.notes ?? null,
         }
       )
+
+      // Keep quote items deterministic across runs
+      await QuoteItem.query().where('quote_id', quote.id).delete()
+
+      for (let i = 0; i < data.items.length; i++) {
+        const item = data.items[i]
+        const itemSubtotal = Number((Number(item.quantity) * Number(item.unitPrice)).toFixed(2))
+
+        await QuoteItem.create({
+          quoteId: quote.id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: itemSubtotal,
+          sortOrder: i + 1,
+        })
+      }
     }
 
     console.log('Seeded clients, projects, and quotes')
