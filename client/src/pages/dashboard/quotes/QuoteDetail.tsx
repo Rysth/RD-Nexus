@@ -217,7 +217,7 @@ export default function QuoteDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {currentQuote.is_editable && (
+              {currentQuote.is_editable && !currentQuote.is_expired && (
                 <DropdownMenuItem
                   onClick={() =>
                     navigate(`/dashboard/quotes/${currentQuote.id}/edit`)
@@ -227,44 +227,54 @@ export default function QuoteDetail() {
                   Editar
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={handleDuplicate}>
-                <Copy className="mr-2 h-4 w-4" />
-                Duplicar
-              </DropdownMenuItem>
+              {!currentQuote.is_expired && (
+                <DropdownMenuItem onClick={handleDuplicate}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Duplicar
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
 
-              {/* Status actions */}
-              {currentQuote.status === "draft" && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate("sent")}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Marcar como Enviada
-                </DropdownMenuItem>
-              )}
-              {currentQuote.status === "sent" && (
+              {/* Status actions - disabled if expired */}
+              {!currentQuote.is_expired && (
                 <>
-                  <DropdownMenuItem
-                    onClick={() => handleStatusUpdate("approved")}
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                    Marcar como Aprobada
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleStatusUpdate("rejected")}
-                  >
-                    <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                    Marcar como Rechazada
-                  </DropdownMenuItem>
+                  {currentQuote.status === "draft" && (
+                    <DropdownMenuItem
+                      onClick={() => handleStatusUpdate("sent")}
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      Marcar como Enviada
+                    </DropdownMenuItem>
+                  )}
+                  {currentQuote.status === "sent" && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusUpdate("approved")}
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                        Marcar como Aprobada
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusUpdate("rejected")}
+                      >
+                        <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                        Marcar como Rechazada
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {(currentQuote.status === "sent" ||
+                    currentQuote.status === "rejected") && (
+                    <DropdownMenuItem
+                      onClick={() => handleStatusUpdate("draft")}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Regresar a Borrador
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
-              {(currentQuote.status === "sent" ||
-                currentQuote.status === "rejected") && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate("draft")}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Regresar a Borrador
-                </DropdownMenuItem>
-              )}
 
-              {currentQuote.is_editable && (
+              {currentQuote.is_editable && !currentQuote.is_expired && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
