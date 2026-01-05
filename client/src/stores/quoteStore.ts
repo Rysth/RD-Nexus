@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { toast } from "sonner";
 import api from "../utils/api";
 import type { Client, Project } from "./clientStore";
 
@@ -185,6 +186,7 @@ export const useQuoteStore = create<QuoteState>((set) => ({
         quotes: [response.data, ...state.quotes],
         quotesLoading: false,
       }));
+      toast.success("Cotización creada exitosamente");
       return response.data;
     } catch (error: unknown) {
       set({
@@ -205,6 +207,7 @@ export const useQuoteStore = create<QuoteState>((set) => ({
           state.currentQuote?.id === id ? response.data : state.currentQuote,
         quotesLoading: false,
       }));
+      toast.success("Cotización actualizada exitosamente");
       return response.data;
     } catch (error: unknown) {
       set({

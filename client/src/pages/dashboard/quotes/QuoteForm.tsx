@@ -94,6 +94,8 @@ export default function QuoteForm() {
   // Estado local para proyectos del cliente seleccionado
   const [clientProjects, setClientProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  // Track if form has been initialized with quote data
+  const [formKey, setFormKey] = useState(0);
 
   const form = useForm<QuoteFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,6 +155,14 @@ export default function QuoteForm() {
           ? Number(currentQuote.project_id)
           : null;
 
+      // Debug: verify clients array has the expected client
+      console.log("[QuoteForm] Populating form:", {
+        safeClientId,
+        safeProjectId,
+        clientsCount: clients.length,
+        clientExists: clients.some((c) => c.id === safeClientId),
+      });
+
       form.reset({
         client_id: safeClientId ?? 0,
         // Set after projects load so the Select can resolve the label
@@ -179,7 +189,7 @@ export default function QuoteForm() {
           })) || [],
       });
 
-      // Cargar proyectos del cliente
+      // Cargar proyectos del cliente y forzar re-render del form
       if (safeClientId) {
         void (async () => {
           const projects = await loadProjectsForClient(safeClientId);
@@ -189,7 +199,12 @@ export default function QuoteForm() {
           ) {
             form.setValue("project_id", safeProjectId, { shouldDirty: false });
           }
+          // Force form re-render after all values are set
+          setFormKey((k) => k + 1);
         })();
+      } else {
+        // No projects to load, just force re-render
+        setFormKey((k) => k + 1);
       }
     }
   }, [isEdit, currentQuote, clients.length, form]);
@@ -313,7 +328,7 @@ export default function QuoteForm() {
         </div>
       </div>
 
-      <Form {...form}>
+      <Form {...form} key={formKey}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left Column - Main Info */}
@@ -352,8 +367,9 @@ export default function QuoteForm() {
                         <FormItem>
                           <FormLabel>Cliente *</FormLabel>
                           <Select
+                            key={`client-select-${formKey}-${field.value}`}
                             value={
-                              field.value === undefined || field.value === null
+                              !field.value || field.value === 0
                                 ? ""
                                 : String(field.value)
                             }
@@ -387,6 +403,7 @@ export default function QuoteForm() {
                         <FormItem>
                           <FormLabel>Proyecto (opcional)</FormLabel>
                           <Select
+                            key={`project-select-${formKey}-${field.value}`}
                             value={
                               field.value === null || field.value === undefined
                                 ? "none"
