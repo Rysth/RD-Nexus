@@ -54,7 +54,6 @@ import {
 const quoteItemSchema = z.object({
   description: z.string().min(1, "Descripción es requerida"),
   quantity: z.coerce.number().min(0.01, "Mínimo 0.01"),
-  unit: z.string().min(1, "Unidad es requerida"),
   unit_price: z.coerce.number().min(0, "Precio debe ser >= 0"),
   discount_percent: z.coerce.number().min(0).max(100).optional().default(0),
   notes: z.string().optional(),
@@ -68,7 +67,7 @@ const quoteFormSchema = z.object({
   issue_date: z.string().min(1, "Fecha de emisión es requerida"),
   valid_until: z.string().min(1, "Fecha de validez es requerida"),
   discount_percent: z.coerce.number().min(0).max(100).optional().default(0),
-  tax_percent: z.coerce.number().min(0).max(100).optional().default(12),
+  tax_rate: z.coerce.number().min(0).max(100).optional().default(15),
   terms_conditions: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(quoteItemSchema).min(1, "Agrega al menos un elemento"),
@@ -107,14 +106,13 @@ export default function QuoteForm() {
       issue_date: format(new Date(), "yyyy-MM-dd"),
       valid_until: format(addDays(new Date(), 30), "yyyy-MM-dd"),
       discount_percent: 0,
-      tax_percent: 12,
+      tax_rate: 15,
       terms_conditions: "",
       notes: "",
       items: [
         {
           description: "",
           quantity: 1,
-          unit: "unidad",
           unit_price: 0,
           discount_percent: 0,
           notes: "",
@@ -152,14 +150,17 @@ export default function QuoteForm() {
         issue_date: currentQuote.issue_date,
         valid_until: currentQuote.valid_until,
         discount_percent: Number(currentQuote.discount_percent) || 0,
-        tax_percent: Number(currentQuote.tax_percent) || 12,
+        tax_rate:
+          Number(
+            (currentQuote as { tax_rate?: number }).tax_rate ??
+              currentQuote.tax_percent
+          ) || 15,
         terms_conditions: currentQuote.terms_conditions || "",
         notes: currentQuote.notes || "",
         items:
           currentQuote.items?.map((item: QuoteItem) => ({
             description: item.description,
             quantity: Number(item.quantity),
-            unit: item.unit,
             unit_price: Number(item.unit_price),
             discount_percent: Number(item.discount_percent) || 0,
             notes: item.notes || "",
@@ -203,7 +204,7 @@ export default function QuoteForm() {
   // Calculate totals
   const watchedItems = form.watch("items");
   const watchedDiscountPercent = form.watch("discount_percent") || 0;
-  const watchedTaxPercent = form.watch("tax_percent") || 0;
+  const watchedTaxRate = form.watch("tax_rate") || 0;
 
   const calculateItemSubtotal = (item: (typeof watchedItems)[number]) => {
     const gross = item.quantity * item.unit_price;
@@ -217,7 +218,7 @@ export default function QuoteForm() {
   );
   const discountAmount = subtotal * (watchedDiscountPercent / 100);
   const taxableAmount = subtotal - discountAmount;
-  const taxAmount = taxableAmount * (watchedTaxPercent / 100);
+  const taxAmount = taxableAmount * (watchedTaxRate / 100);
   const total = taxableAmount + taxAmount;
 
   const formatCurrency = (value: number) => {
@@ -255,7 +256,6 @@ export default function QuoteForm() {
     append({
       description: "",
       quantity: 1,
-      unit: "unidad",
       unit_price: 0,
       discount_percent: 0,
       notes: "",
@@ -265,7 +265,7 @@ export default function QuoteForm() {
   if (isEdit && quotesLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function QuoteForm() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -293,7 +293,7 @@ export default function QuoteForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left Column - Main Info */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6 lg:col-span-2">
               {/* Basic Info */}
               <Card>
                 <CardHeader>
@@ -435,7 +435,7 @@ export default function QuoteForm() {
                       </CardDescription>
                     </div>
                     <Button type="button" onClick={addItem} size="sm">
-                      <Plus className="mr-2 h-4 w-4" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Agregar
                     </Button>
                   </div>
@@ -449,10 +449,9 @@ export default function QuoteForm() {
                             Descripción
                           </TableHead>
                           <TableHead className="w-20">Cantidad</TableHead>
-                          <TableHead className="w-24">Unidad</TableHead>
                           <TableHead className="w-28">P. Unitario</TableHead>
                           <TableHead className="w-20">Desc. %</TableHead>
-                          <TableHead className="w-28 text-right">
+                          <TableHead className="text-right w-28">
                             Subtotal
                           </TableHead>
                           <TableHead className="w-12" />
@@ -507,49 +506,6 @@ export default function QuoteForm() {
                               <TableCell>
                                 <FormField
                                   control={form.control}
-                                  name={`items.${index}.unit`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <Select
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                      >
-                                        <FormControl>
-                                          <SelectTrigger className="w-24">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          <SelectItem value="unidad">
-                                            Unidad
-                                          </SelectItem>
-                                          <SelectItem value="hora">
-                                            Hora
-                                          </SelectItem>
-                                          <SelectItem value="dia">
-                                            Día
-                                          </SelectItem>
-                                          <SelectItem value="semana">
-                                            Semana
-                                          </SelectItem>
-                                          <SelectItem value="mes">
-                                            Mes
-                                          </SelectItem>
-                                          <SelectItem value="proyecto">
-                                            Proyecto
-                                          </SelectItem>
-                                          <SelectItem value="servicio">
-                                            Servicio
-                                          </SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
                                   name={`items.${index}.unit_price`}
                                   render={({ field }) => (
                                     <FormItem>
@@ -586,7 +542,7 @@ export default function QuoteForm() {
                                   )}
                                 />
                               </TableCell>
-                              <TableCell className="text-right font-medium">
+                              <TableCell className="font-medium text-right">
                                 {formatCurrency(itemSubtotal)}
                               </TableCell>
                               <TableCell>
@@ -597,7 +553,7 @@ export default function QuoteForm() {
                                     size="icon"
                                     onClick={() => remove(index)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                    <Trash2 className="w-4 h-4 text-red-500" />
                                   </Button>
                                 )}
                               </TableCell>
@@ -607,17 +563,17 @@ export default function QuoteForm() {
                       </TableBody>
                       <TableFooter>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-right">
+                          <TableCell colSpan={4} className="text-right">
                             Subtotal
                           </TableCell>
-                          <TableCell className="text-right font-medium">
+                          <TableCell className="font-medium text-right">
                             {formatCurrency(subtotal)}
                           </TableCell>
                           <TableCell />
                         </TableRow>
                         {watchedDiscountPercent > 0 && (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-right">
+                            <TableCell colSpan={4} className="text-right">
                               Descuento ({watchedDiscountPercent}%)
                             </TableCell>
                             <TableCell className="text-right text-red-600">
@@ -627,8 +583,8 @@ export default function QuoteForm() {
                           </TableRow>
                         )}
                         <TableRow>
-                          <TableCell colSpan={5} className="text-right">
-                            IVA ({watchedTaxPercent}%)
+                          <TableCell colSpan={4} className="text-right">
+                            IVA ({watchedTaxRate}%)
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(taxAmount)}
@@ -637,12 +593,12 @@ export default function QuoteForm() {
                         </TableRow>
                         <TableRow className="bg-muted/50">
                           <TableCell
-                            colSpan={5}
-                            className="text-right text-lg font-bold"
+                            colSpan={4}
+                            className="text-lg font-bold text-right"
                           >
                             Total
                           </TableCell>
-                          <TableCell className="text-right text-lg font-bold">
+                          <TableCell className="text-lg font-bold text-right">
                             {formatCurrency(total)}
                           </TableCell>
                           <TableCell />
@@ -651,7 +607,7 @@ export default function QuoteForm() {
                     </Table>
                   </div>
                   {form.formState.errors.items && (
-                    <p className="text-sm text-red-500 mt-2">
+                    <p className="mt-2 text-sm text-red-500">
                       {form.formState.errors.items.message}
                     </p>
                   )}
@@ -748,7 +704,7 @@ export default function QuoteForm() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4" />
+                    <Calculator className="w-4 h-4" />
                     Cálculos
                   </CardTitle>
                 </CardHeader>
@@ -778,7 +734,7 @@ export default function QuoteForm() {
 
                   <FormField
                     control={form.control}
-                    name="tax_percent"
+                    name="tax_rate"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>IVA (%)</FormLabel>
@@ -796,7 +752,7 @@ export default function QuoteForm() {
                     )}
                   />
 
-                  <div className="border-t pt-4 space-y-2">
+                  <div className="pt-4 space-y-2 border-t">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal:</span>
                       <span>{formatCurrency(subtotal)}</span>
@@ -811,7 +767,7 @@ export default function QuoteForm() {
                       <span>IVA:</span>
                       <span>{formatCurrency(taxAmount)}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <div className="flex justify-between pt-2 text-lg font-bold border-t">
                       <span>Total:</span>
                       <span>{formatCurrency(total)}</span>
                     </div>
@@ -829,12 +785,12 @@ export default function QuoteForm() {
                   >
                     {form.formState.isSubmitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Guardando...
                       </>
                     ) : (
                       <>
-                        <Save className="mr-2 h-4 w-4" />
+                        <Save className="w-4 h-4 mr-2" />
                         {isEdit ? "Actualizar" : "Crear"} Cotización
                       </>
                     )}

@@ -17,7 +17,6 @@ export interface QuoteItem {
   quote_id?: number;
   description: string;
   quantity: number;
-  unit: string;
   unit_price: number;
   discount_percent: number;
   subtotal: number;
@@ -41,7 +40,8 @@ export interface Quote {
   subtotal: number;
   discount_percent: number;
   discount_amount: number;
-  tax_percent: number;
+  tax_rate: number;
+  tax_percent?: number; // legacy naming kept for backwards compatibility
   tax_amount: number;
   total: number;
   terms_conditions: string | null;
@@ -71,7 +71,6 @@ export interface QuoteFilters {
 interface CreateQuoteItemData {
   description: string;
   quantity: number;
-  unit: string;
   unit_price: number;
   discount_percent?: number;
   notes?: string;
@@ -85,7 +84,7 @@ interface CreateQuoteData {
   issue_date: string;
   valid_until: string;
   discount_percent?: number;
-  tax_percent?: number;
+  tax_rate?: number;
   terms_conditions?: string | null;
   notes?: string | null;
   items: CreateQuoteItemData[];
@@ -100,7 +99,7 @@ interface UpdateQuoteData {
   valid_until?: string;
   status?: "draft" | "sent" | "approved" | "rejected";
   discount_percent?: number;
-  tax_percent?: number;
+  tax_rate?: number;
   terms_conditions?: string | null;
   notes?: string | null;
   items?: CreateQuoteItemData[];
