@@ -354,7 +354,9 @@ export default function QuoteList() {
                       <Button
                         variant="link"
                         className="p-0 h-auto font-mono text-sm"
-                        onClick={() => navigate(`/dashboard/quotes/${quote.id}`)}
+                        onClick={() =>
+                          navigate(`/dashboard/quotes/${quote.id}`)
+                        }
                       >
                         {quote.quote_number}
                       </Button>
