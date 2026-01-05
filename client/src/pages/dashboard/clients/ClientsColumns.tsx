@@ -1,5 +1,11 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2,
+  MessageCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -75,6 +81,16 @@ export const createClientsColumns = ({
     header: "Acciones",
     cell: ({ row }) => {
       const client = row.original;
+
+      const buildWhatsAppUrl = (phone: string) => {
+        const digits = phone.replace(/\D/g, "");
+        if (!digits) return null;
+        return `https://wa.me/${digits}`;
+      };
+
+      const canWhatsApp = Boolean(
+        client.phone && buildWhatsAppUrl(client.phone)
+      );
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -91,6 +107,17 @@ export const createClientsColumns = ({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(client)}>
               <Pencil className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!canWhatsApp}
+              onClick={() => {
+                if (!client.phone) return;
+                const url = buildWhatsAppUrl(client.phone);
+                if (!url) return;
+                window.open(url, "_blank", "noopener,noreferrer");
+              }}
+            >
+              <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

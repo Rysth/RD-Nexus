@@ -172,11 +172,21 @@ export default function QuoteForm() {
         issue_date: currentQuote.issue_date,
         valid_until: currentQuote.valid_until,
         discount_percent: Number(currentQuote.discount_percent) || 0,
-        tax_rate:
-          Number(
-            (currentQuote as { tax_rate?: number }).tax_rate ??
-              currentQuote.tax_percent
-          ) || 15,
+        tax_rate: (() => {
+          const raw =
+            (
+              currentQuote as {
+                tax_rate?: number | null;
+                tax_percent?: number | null;
+              }
+            ).tax_rate ??
+            (currentQuote as { tax_percent?: number | null }).tax_percent;
+
+          if (raw === null || raw === undefined) return 15;
+
+          const num = Number(raw);
+          return Number.isFinite(num) ? num : 15;
+        })(),
         terms_conditions: currentQuote.terms_conditions || "",
         notes: currentQuote.notes || "",
         items:

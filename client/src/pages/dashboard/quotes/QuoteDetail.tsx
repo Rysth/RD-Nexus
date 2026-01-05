@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import type { ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuoteStore } from "@/stores/quoteStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +53,7 @@ import {
   Download,
   Eye,
   AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -66,7 +68,7 @@ const statusColors: Record<string, string> = {
   rejected: "bg-red-500",
 };
 
-const statusIcons: Record<string, React.ReactNode> = {
+const statusIcons: Record<string, ReactNode> = {
   draft: <FileText className="h-4 w-4" />,
   sent: <Send className="h-4 w-4" />,
   approved: <CheckCircle className="h-4 w-4" />,
@@ -77,6 +79,14 @@ export default function QuoteDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const printRef = useRef<HTMLDivElement>(null);
+
+  const buildWhatsAppUrl = (phone: string, text?: string) => {
+    const digits = phone.replace(/\D/g, "");
+    if (!digits) return null;
+    const base = `https://wa.me/${digits}`;
+    if (!text) return base;
+    return `${base}?text=${encodeURIComponent(text)}`;
+  };
 
   const {
     currentQuote,
@@ -201,6 +211,20 @@ export default function QuoteDetail() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const phone = currentQuote.client?.phone;
+              if (!phone) return;
+              const url = buildWhatsAppUrl(phone);
+              if (!url) return;
+              window.open(url, "_blank", "noopener,noreferrer");
+            }}
+            disabled={!currentQuote.client?.phone}
+          >
+            <MessageCircle className="mr-2 h-4 w-4" />
+            WhatsApp
+          </Button>
           <Button variant="outline" onClick={() => setPreviewOpen(true)}>
             <Eye className="mr-2 h-4 w-4" />
             Vista Previa
