@@ -57,41 +57,55 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
         {/* Info Row */}
         <div className="quote-info-row">
           <div className="quote-info-left">
-            <div className="quote-info-item">
-              <span className="quote-info-label">Nombre:</span>
-              <span className="quote-info-value">
-                {business?.legal_name || business?.name}
-              </span>
-            </div>
-            <div className="quote-info-item">
-              <span className="quote-info-label">Celular:</span>
-              <span className="quote-info-value quote-link">
-                {business?.whatsapp || business?.phone || "N/A"}
-              </span>
-            </div>
-            <div className="quote-info-item">
-              <span className="quote-info-label">Email:</span>
-              <span className="quote-info-value quote-link">
-                {business?.email || "N/A"}
-              </span>
+            <div className="quote-section" style={{ marginBottom: 0 }}>
+              <div className="quote-section-header">
+                <span>De</span>
+              </div>
+              <div className="quote-client-info">
+                <div className="quote-info-item">
+                  <span className="quote-info-label">Nombre:</span>
+                  <span className="quote-info-value">
+                    {business?.legal_name || "RysthDesign"}
+                  </span>
+                </div>
+                <div className="quote-info-item">
+                  <span className="quote-info-label">Celular:</span>
+                  <span className="quote-info-value quote-link">
+                    0988949117
+                  </span>
+                </div>
+                <div className="quote-info-item">
+                  <span className="quote-info-label">Email:</span>
+                  <span className="quote-info-value quote-link">
+                    support@rysthdesign.com
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
           <div className="quote-info-right">
-            <div className="quote-info-item">
-              <span className="quote-info-label">Fecha:</span>
-              <span className="quote-info-value">
-                {formatDate(quote.issue_date)}
-              </span>
-            </div>
-            <div className="quote-info-item">
-              <span className="quote-info-label">Cotización #:</span>
-              <span className="quote-info-value">{quote.quote_number}</span>
-            </div>
-            <div className="quote-info-item">
-              <span className="quote-info-label">Válida hasta:</span>
-              <span className="quote-info-value">
-                {formatDate(quote.valid_until)}
-              </span>
+            <div className="quote-section" style={{ marginBottom: 0 }}>
+              <div className="quote-section-header">
+                <span>Detalles</span>
+              </div>
+              <div className="quote-client-info">
+                <div className="quote-info-item">
+                  <span className="quote-info-label">Fecha:</span>
+                  <span className="quote-info-value">
+                    {formatDate(quote.issue_date)}
+                  </span>
+                </div>
+                <div className="quote-info-item">
+                  <span className="quote-info-label">Cotización #:</span>
+                  <span className="quote-info-value">{quote.quote_number}</span>
+                </div>
+                <div className="quote-info-item">
+                  <span className="quote-info-label">Válida hasta:</span>
+                  <span className="quote-info-value">
+                    {formatDate(quote.valid_until)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
