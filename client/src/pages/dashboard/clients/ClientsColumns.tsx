@@ -1,13 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
-import {
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  MessageCircle,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +7,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ColumnDef } from "@tanstack/react-table";
+import {
+  Eye,
+  MessageCircle,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { Client } from "../../../stores/clientStore";
 
 interface ColumnsProps {
@@ -23,12 +22,6 @@ interface ColumnsProps {
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
 }
-
-const idTypeConfig: Record<string, { label: string; className: string }> = {
-  "04": { label: "RUC", className: "bg-blue-100 text-blue-800" },
-  "05": { label: "Cédula", className: "bg-green-100 text-green-800" },
-  "06": { label: "Pasaporte", className: "bg-purple-100 text-purple-800" },
-};
 
 export const createClientsColumns = ({
   onView,
@@ -94,19 +87,19 @@ export const createClientsColumns = ({
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="w-8 h-8 p-0">
               <span className="sr-only">Abrir menú</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onView(client)}>
-              <Eye className="mr-2 h-4 w-4" /> Ver detalle
+              <Eye className="w-4 h-4 mr-2" /> Ver detalle
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(client)}>
-              <Pencil className="mr-2 h-4 w-4" /> Editar
+              <Pencil className="w-4 h-4 mr-2" /> Editar
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={!canWhatsApp}
@@ -117,14 +110,14 @@ export const createClientsColumns = ({
                 window.open(url, "_blank", "noopener,noreferrer");
               }}
             >
-              <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+              <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(client)}
               className="text-red-600"
             >
-              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+              <Trash2 className="w-4 h-4 mr-2" /> Eliminar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

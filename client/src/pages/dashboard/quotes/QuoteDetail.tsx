@@ -216,7 +216,35 @@ export default function QuoteDetail() {
             onClick={() => {
               const phone = currentQuote.client?.phone;
               if (!phone) return;
-              const url = buildWhatsAppUrl(phone);
+              const formattedValidUntil = (() => {
+                try {
+                  return format(
+                    new Date(currentQuote.valid_until),
+                    "dd MMM yyyy",
+                    {
+                      locale: es,
+                    }
+                  );
+                } catch {
+                  return currentQuote.valid_until;
+                }
+              })();
+
+              const businessName = business?.name
+                ? `\n\nDe parte de ${business.name}`
+                : "";
+              const text =
+                `Saludos${
+                  currentQuote.client?.name
+                    ? ` ${currentQuote.client.name}`
+                    : ""
+                }, ` +
+                `te comparto la cotización ${currentQuote.quote_number} (${currentQuote.title}).\n` +
+                `Total: ${formatCurrency(currentQuote.total)}\n` +
+                `Válida hasta: ${formattedValidUntil}` +
+                businessName;
+
+              const url = buildWhatsAppUrl(phone, text);
               if (!url) return;
               window.open(url, "_blank", "noopener,noreferrer");
             }}
