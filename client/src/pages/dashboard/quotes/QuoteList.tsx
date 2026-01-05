@@ -351,7 +351,13 @@ export default function QuoteList() {
                 {quotes.map((quote) => (
                   <TableRow key={quote.id}>
                     <TableCell className="font-mono text-sm">
-                      {quote.quote_number}
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto font-mono text-sm"
+                        onClick={() => navigate(`/dashboard/quotes/${quote.id}`)}
+                      >
+                        {quote.quote_number}
+                      </Button>
                     </TableCell>
                     <TableCell className="font-medium">{quote.title}</TableCell>
                     <TableCell>{quote.client?.name || "-"}</TableCell>
