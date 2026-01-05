@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { toast } from "sonner";
+import  toast  from "react-hot-toast";
 import api from "../utils/api";
 import type { Client, Project } from "./clientStore";
 
