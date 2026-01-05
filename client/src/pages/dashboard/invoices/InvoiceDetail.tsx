@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import type { ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useQuoteStore } from "@/stores/quoteStore";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useInvoiceStore } from "@/stores/invoiceStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,15 +36,21 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   Edit,
   Trash2,
-  Copy,
-  Send,
-  CheckCircle,
-  XCircle,
   FileText,
   MoreVertical,
   Building2,
@@ -55,31 +60,37 @@ import {
   Eye,
   AlertCircle,
   MessageCircle,
-  Receipt,
+  CheckCircle,
+  Clock,
+  Ban,
+  DollarSign,
+  XCircle,
+  Link as LinkIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
 import { useBusinessStore } from "@/stores/businessStore";
-import QuotePrintTemplate from "@/components/quotes/QuotePrintTemplate";
+import InvoicePrintTemplate from "@/components/invoices/InvoicePrintTemplate";
 
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-500",
-  sent: "bg-blue-500",
-  approved: "bg-green-500",
-  rejected: "bg-red-500",
+  pending: "bg-yellow-500",
+  paid: "bg-green-500",
+  overdue: "bg-red-500",
+  voided: "bg-gray-500",
 };
 
 const statusIcons: Record<string, ReactNode> = {
-  draft: <FileText className="h-4 w-4" />,
-  sent: <Send className="h-4 w-4" />,
-  approved: <CheckCircle className="h-4 w-4" />,
-  rejected: <XCircle className="h-4 w-4" />,
+  pending: <Clock className="h-4 w-4" />,
+  paid: <CheckCircle className="h-4 w-4" />,
+  overdue: <AlertCircle className="h-4 w-4" />,
+  voided: <Ban className="h-4 w-4" />,
 };
 
-export default function QuoteDetail() {
+export default function InvoiceDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const printRef = useRef<HTMLDivElement>(null);
 
   const buildWhatsAppUrl = (phone: string, text?: string) => {
@@ -91,43 +102,56 @@ export default function QuoteDetail() {
   };
 
   const {
-    currentQuote,
-    quotesLoading,
-    fetchQuote,
-    deleteQuote,
-    updateQuoteStatus,
-    duplicateQuote,
-    clearCurrentQuote,
-  } = useQuoteStore();
+    currentInvoice,
+    invoicesLoading,
+    fetchInvoice,
+    deleteInvoice,
+    markAsPaid,
+    voidInvoice,
+    clearCurrentInvoice,
+  } = useInvoiceStore();
 
   const { business, fetchBusiness } = useBusinessStore();
 
-  const { convertFromQuote, invoicesLoading } = useInvoiceStore();
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [voidDialogOpen, setVoidDialogOpen] = useState(false);
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<
+    "transfer" | "cash" | "card" | "other"
+  >("transfer");
+  const [paymentNotes, setPaymentNotes] = useState("");
 
   useEffect(() => {
     if (id) {
-      fetchQuote(parseInt(id));
+      fetchInvoice(parseInt(id));
       fetchBusiness();
     }
     return () => {
-      clearCurrentQuote();
+      clearCurrentInvoice();
     };
-  }, [id, fetchQuote, fetchBusiness, clearCurrentQuote]);
+  }, [id, fetchInvoice, fetchBusiness, clearCurrentInvoice]);
+
+  // Open pay dialog if action=pay in URL
+  useEffect(() => {
+    if (
+      searchParams.get("action") === "pay" &&
+      currentInvoice?.status === "pending"
+    ) {
+      setPayDialogOpen(true);
+    }
+  }, [searchParams, currentInvoice]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: currentQuote?.quote_number || "Cotizacion",
+    documentTitle: currentInvoice?.invoice_number || "Factura",
   });
 
   const handleDelete = async () => {
-    if (!currentQuote) return;
+    if (!currentInvoice) return;
     try {
-      await deleteQuote(currentQuote.id);
-      navigate("/dashboard/quotes");
+      await deleteInvoice(currentInvoice.id);
+      navigate("/dashboard/invoices");
     } catch {
       // Toast is shown in the store
     } finally {
@@ -135,35 +159,28 @@ export default function QuoteDetail() {
     }
   };
 
-  const handleStatusUpdate = async (newStatus: string) => {
-    if (!currentQuote) return;
+  const handleVoid = async () => {
+    if (!currentInvoice) return;
     try {
-      await updateQuoteStatus(currentQuote.id, newStatus);
-      // Toast is shown in the store
-    } catch {
-      // Toast is shown in the store
-    }
-  };
-
-  const handleDuplicate = async () => {
-    if (!currentQuote) return;
-    try {
-      const newQuote = await duplicateQuote(currentQuote.id);
-      navigate(`/dashboard/quotes/${newQuote.id}`);
-    } catch {
-      // Toast is shown in the store
-    }
-  };
-
-  const handleConvertToInvoice = async () => {
-    if (!currentQuote) return;
-    try {
-      const invoice = await convertFromQuote(currentQuote.id);
-      navigate(`/dashboard/invoices/${invoice.id}`);
+      await voidInvoice(currentInvoice.id);
     } catch {
       // Toast is shown in the store
     } finally {
-      setConvertDialogOpen(false);
+      setVoidDialogOpen(false);
+    }
+  };
+
+  const handleMarkAsPaid = async () => {
+    if (!currentInvoice) return;
+    try {
+      await markAsPaid(currentInvoice.id, {
+        payment_method: paymentMethod,
+        payment_notes: paymentNotes || undefined,
+      });
+      setPayDialogOpen(false);
+      setPaymentNotes("");
+    } catch {
+      // Toast is shown in the store
     }
   };
 
@@ -174,7 +191,7 @@ export default function QuoteDetail() {
     }).format(value);
   };
 
-  if (quotesLoading) {
+  if (invoicesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -182,12 +199,12 @@ export default function QuoteDetail() {
     );
   }
 
-  if (!currentQuote) {
+  if (!currentInvoice) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Cotización no encontrada</p>
-        <Button variant="link" onClick={() => navigate("/dashboard/quotes")}>
-          Volver a cotizaciones
+        <p className="text-muted-foreground">Factura no encontrada</p>
+        <Button variant="link" onClick={() => navigate("/dashboard/invoices")}>
+          Volver a facturas
         </Button>
       </div>
     );
@@ -201,69 +218,94 @@ export default function QuoteDetail() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/dashboard/quotes")}
+            onClick={() => navigate("/dashboard/invoices")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-3xl font-bold tracking-tight">
-                {currentQuote.quote_number}
+                {currentInvoice.invoice_number}
               </h2>
               <Badge
-                className={`${statusColors[currentQuote.status]} text-white`}
+                className={`${statusColors[currentInvoice.status]} text-white`}
               >
-                <span className="mr-1">{statusIcons[currentQuote.status]}</span>
-                {currentQuote.status_label}
+                <span className="mr-1">
+                  {statusIcons[currentInvoice.status]}
+                </span>
+                {currentInvoice.status_label}
               </Badge>
-              {currentQuote.is_expired && (
-                <Badge variant="destructive">
-                  <AlertCircle className="mr-1 h-3 w-3" />
-                  Expirada
-                </Badge>
-              )}
+              {currentInvoice.is_overdue &&
+                currentInvoice.status === "pending" && (
+                  <Badge variant="destructive">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    Vencida
+                  </Badge>
+                )}
             </div>
-            <p className="text-muted-foreground">{currentQuote.title}</p>
+            <p className="text-muted-foreground flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {currentInvoice.source_label}
+              </Badge>
+              {currentInvoice.quote && (
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-sm"
+                  onClick={() =>
+                    navigate(`/dashboard/quotes/${currentInvoice.quote?.id}`)
+                  }
+                >
+                  <LinkIcon className="w-3 h-3 mr-1" />
+                  {currentInvoice.quote.quote_number}
+                </Button>
+              )}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {currentInvoice.status === "pending" && (
+            <Button onClick={() => setPayDialogOpen(true)}>
+              <DollarSign className="mr-2 h-4 w-4" />
+              Registrar Pago
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => {
-              const phone = currentQuote.client?.phone;
+              const phone = currentInvoice.client?.phone;
               if (!phone) return;
-              const formattedValidUntil = (() => {
+              const formattedDueDate = (() => {
                 try {
                   return format(
-                    new Date(currentQuote.valid_until),
+                    new Date(currentInvoice.due_date),
                     "dd MMM yyyy",
                     {
                       locale: es,
                     }
                   );
                 } catch {
-                  return currentQuote.valid_until;
+                  return currentInvoice.due_date;
                 }
               })();
 
               const businessName = "\n\nDe parte de Nexus by RysthDesign";
               const text =
                 `Saludos${
-                  currentQuote.client?.name
-                    ? ` ${currentQuote.client.name}`
+                  currentInvoice.client?.name
+                    ? ` ${currentInvoice.client.name}`
                     : ""
                 }, ` +
-                `te comparto la cotización ${currentQuote.quote_number} (${currentQuote.title}).\n` +
-                `Total: ${formatCurrency(currentQuote.total)}\n` +
-                `Válida hasta: ${formattedValidUntil}` +
+                `te comparto la factura ${currentInvoice.invoice_number}.\n` +
+                `Total: ${formatCurrency(currentInvoice.total)}\n` +
+                `Vence: ${formattedDueDate}` +
                 businessName;
 
               const url = buildWhatsAppUrl(phone, text);
               if (!url) return;
               window.open(url, "_blank", "noopener,noreferrer");
             }}
-            disabled={!currentQuote.client?.phone}
+            disabled={!currentInvoice.client?.phone}
           >
             <MessageCircle className="mr-2 h-4 w-4" />
             WhatsApp
@@ -284,78 +326,32 @@ export default function QuoteDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {currentQuote.is_editable && !currentQuote.is_expired && (
+              {currentInvoice.is_editable && (
                 <DropdownMenuItem
                   onClick={() =>
-                    navigate(`/dashboard/quotes/${currentQuote.id}/edit`)
+                    navigate(`/dashboard/invoices/${currentInvoice.id}/edit`)
                   }
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Editar
                 </DropdownMenuItem>
               )}
-              {!currentQuote.is_expired && (
-                <DropdownMenuItem onClick={handleDuplicate}>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Duplicar
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
 
-              {/* Status actions - disabled if expired */}
-              {!currentQuote.is_expired && (
-                <>
-                  {currentQuote.status === "draft" && (
+              {currentInvoice.status !== "paid" &&
+                currentInvoice.status !== "voided" && (
+                  <>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => handleStatusUpdate("sent")}
+                      onClick={() => setVoidDialogOpen(true)}
+                      className="text-orange-600"
                     >
-                      <Send className="mr-2 h-4 w-4" />
-                      Marcar como Enviada
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Anular Factura
                     </DropdownMenuItem>
-                  )}
-                  {currentQuote.status === "sent" && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => handleStatusUpdate("approved")}
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                        Marcar como Aprobada
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleStatusUpdate("rejected")}
-                      >
-                        <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                        Marcar como Rechazada
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {(currentQuote.status === "sent" ||
-                    currentQuote.status === "rejected") && (
-                    <DropdownMenuItem
-                      onClick={() => handleStatusUpdate("draft")}
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Regresar a Borrador
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
+                  </>
+                )}
 
-              {/* Convert to Invoice - only for approved quotes */}
-              {currentQuote.status === "approved" && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setConvertDialogOpen(true)}
-                    className="text-green-600"
-                  >
-                    <Receipt className="mr-2 h-4 w-4" />
-                    Convertir a Factura
-                  </DropdownMenuItem>
-                </>
-              )}
-
-              {currentQuote.is_editable && !currentQuote.is_expired && (
+              {currentInvoice.is_editable && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -372,7 +368,7 @@ export default function QuoteDetail() {
         </div>
       </div>
 
-      {/* Info Cards - Visible in app */}
+      {/* Info Cards */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Client Info */}
         <Card>
@@ -383,22 +379,22 @@ export default function QuoteDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-semibold">{currentQuote.client?.name}</div>
-            {currentQuote.client?.email && (
+            <div className="font-semibold">{currentInvoice.client?.name}</div>
+            {currentInvoice.client?.email && (
               <div className="text-sm text-muted-foreground">
-                {currentQuote.client.email}
+                {currentInvoice.client.email}
               </div>
             )}
-            {currentQuote.client?.phone && (
+            {currentInvoice.client?.phone && (
               <div className="text-sm text-muted-foreground">
-                {currentQuote.client.phone}
+                {currentInvoice.client.phone}
               </div>
             )}
             <Button
               variant="link"
               className="p-0 h-auto mt-2"
               onClick={() =>
-                navigate(`/dashboard/clients/${currentQuote.client_id}`)
+                navigate(`/dashboard/clients/${currentInvoice.client_id}`)
               }
             >
               Ver cliente →
@@ -407,7 +403,7 @@ export default function QuoteDetail() {
         </Card>
 
         {/* Project Info (if linked) */}
-        {currentQuote.project && (
+        {currentInvoice.project && (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -416,15 +412,15 @@ export default function QuoteDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-semibold">{currentQuote.project.name}</div>
+              <div className="font-semibold">{currentInvoice.project.name}</div>
               <Badge variant="outline" className="mt-1">
-                {currentQuote.project.status_label}
+                {currentInvoice.project.status_label}
               </Badge>
               <Button
                 variant="link"
                 className="p-0 h-auto mt-2 block"
                 onClick={() =>
-                  navigate(`/dashboard/projects/${currentQuote.project_id}`)
+                  navigate(`/dashboard/projects/${currentInvoice.project_id}`)
                 }
               >
                 Ver proyecto →
@@ -445,31 +441,89 @@ export default function QuoteDetail() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Emitida:</span>
               <span className="font-medium">
-                {format(new Date(currentQuote.issue_date), "dd MMM yyyy", {
+                {format(new Date(currentInvoice.issue_date), "dd MMM yyyy", {
                   locale: es,
                 })}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Válida hasta:</span>
+              <span className="text-muted-foreground">Vence:</span>
               <span
                 className={`font-medium ${
-                  currentQuote.is_expired ? "text-red-500" : ""
+                  currentInvoice.is_overdue &&
+                  currentInvoice.status === "pending"
+                    ? "text-red-500"
+                    : ""
                 }`}
               >
-                {format(new Date(currentQuote.valid_until), "dd MMM yyyy", {
+                {format(new Date(currentInvoice.due_date), "dd MMM yyyy", {
                   locale: es,
                 })}
               </span>
             </div>
+            {currentInvoice.payment_date && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Pagada:</span>
+                <span className="font-medium text-green-600">
+                  {format(
+                    new Date(currentInvoice.payment_date),
+                    "dd MMM yyyy",
+                    {
+                      locale: es,
+                    }
+                  )}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
+      {/* Payment Info (if paid) */}
+      {currentInvoice.status === "paid" && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-700">
+              <CheckCircle className="h-4 w-4" />
+              Información de Pago
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-green-700">
+            <div className="grid gap-2 md:grid-cols-3">
+              <div>
+                <span className="text-sm text-green-600">Método:</span>
+                <p className="font-medium">
+                  {currentInvoice.payment_method_label}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-green-600">Fecha:</span>
+                <p className="font-medium">
+                  {currentInvoice.payment_date &&
+                    format(
+                      new Date(currentInvoice.payment_date),
+                      "dd MMM yyyy",
+                      {
+                        locale: es,
+                      }
+                    )}
+                </p>
+              </div>
+              {currentInvoice.payment_notes && (
+                <div>
+                  <span className="text-sm text-green-600">Notas:</span>
+                  <p className="font-medium">{currentInvoice.payment_notes}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Items Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Elementos de la Cotización</CardTitle>
+          <CardTitle>Elementos de la Factura</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -482,7 +536,7 @@ export default function QuoteDetail() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentQuote.items?.map((item, index) => (
+              {currentInvoice.items?.map((item, index) => (
                 <TableRow key={item.id || index}>
                   <TableCell>{item.description}</TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
@@ -503,22 +557,22 @@ export default function QuoteDetail() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal:</span>
                 <span className="font-medium">
-                  {formatCurrency(currentQuote.subtotal)}
+                  {formatCurrency(currentInvoice.subtotal)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  IVA ({currentQuote.tax_rate}%):
+                  IVA ({currentInvoice.tax_rate}%):
                 </span>
                 <span className="font-medium">
-                  {formatCurrency(currentQuote.tax_amount)}
+                  {formatCurrency(currentInvoice.tax_amount)}
                 </span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Total:</span>
                 <span className="font-bold text-primary">
-                  {formatCurrency(currentQuote.total)}
+                  {formatCurrency(currentInvoice.total)}
                 </span>
               </div>
             </div>
@@ -527,36 +581,22 @@ export default function QuoteDetail() {
       </Card>
 
       {/* Notes */}
-      {currentQuote.notes && (
+      {currentInvoice.notes && (
         <Card>
           <CardHeader>
             <CardTitle>Notas</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap">{currentQuote.notes}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Terms and Conditions */}
-      {currentQuote.terms_conditions && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Términos y Condiciones</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap">
-              {currentQuote.terms_conditions}
-            </p>
+            <p className="whitespace-pre-wrap">{currentInvoice.notes}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Hidden Print Template */}
       <div className="hidden">
-        <QuotePrintTemplate
+        <InvoicePrintTemplate
           ref={printRef}
-          quote={currentQuote}
+          invoice={currentInvoice}
           business={business}
         />
       </div>
@@ -565,12 +605,15 @@ export default function QuoteDetail() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0 bg-gray-100/95 backdrop-blur-sm">
           <DialogHeader className="p-4 border-b bg-white">
-            <DialogTitle>Vista Previa de Cotización</DialogTitle>
+            <DialogTitle>Vista Previa de Factura</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 flex justify-center">
             <div className="bg-white shadow-2xl rounded-sm max-w-[210mm] w-full min-h-[297mm] mx-auto overflow-hidden">
-              <QuotePrintTemplate quote={currentQuote} business={business} />
+              <InvoicePrintTemplate
+                invoice={currentInvoice}
+                business={business}
+              />
             </div>
           </div>
 
@@ -591,14 +634,69 @@ export default function QuoteDetail() {
         </DialogContent>
       </Dialog>
 
+      {/* Pay Dialog */}
+      <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Pago</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Método de Pago</Label>
+              <Select
+                value={paymentMethod}
+                onValueChange={(v) =>
+                  setPaymentMethod(v as "transfer" | "cash" | "card" | "other")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transfer">Transferencia</SelectItem>
+                  <SelectItem value="cash">Efectivo</SelectItem>
+                  <SelectItem value="card">Tarjeta</SelectItem>
+                  <SelectItem value="other">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Notas (opcional)</Label>
+              <Textarea
+                placeholder="Número de transferencia, referencia, etc."
+                value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)}
+              />
+            </div>
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex justify-between text-lg">
+                <span>Total a registrar:</span>
+                <span className="font-bold text-primary">
+                  {formatCurrency(currentInvoice.total)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleMarkAsPaid}>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Confirmar Pago
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar cotización?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar factura?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Se eliminará permanentemente la
-              cotización "{currentQuote.quote_number}" y todos sus elementos.
+              factura "{currentInvoice.invoice_number}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -613,26 +711,23 @@ export default function QuoteDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Convert to Invoice Dialog */}
-      <AlertDialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+      {/* Void Dialog */}
+      <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Convertir a factura?</AlertDialogTitle>
+            <AlertDialogTitle>¿Anular factura?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se creará una factura a partir de la cotización "
-              {currentQuote.quote_number}". La factura incluirá todos los
-              elementos y montos de esta cotización. El vencimiento será de 30
-              días a partir de hoy.
+              La factura "{currentInvoice.invoice_number}" será marcada como
+              anulada. Esta acción no elimina la factura, solo cambia su estado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConvertToInvoice}
-              disabled={invoicesLoading}
-              className="bg-green-600 hover:bg-green-700"
+              onClick={handleVoid}
+              className="bg-orange-600 hover:bg-orange-700"
             >
-              {invoicesLoading ? "Convirtiendo..." : "Crear Factura"}
+              Anular
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

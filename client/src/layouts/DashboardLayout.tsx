@@ -53,6 +53,14 @@ export default function DashboardLayout() {
       return { section: "Cotizaciones", page: "Editar" };
     } else if (path.startsWith("/dashboard/quotes/")) {
       return { section: "Cotizaciones", page: "Detalle" };
+    } else if (path === "/dashboard/invoices") {
+      return { section: "Dashboard", page: "Facturas" };
+    } else if (path === "/dashboard/invoices/new") {
+      return { section: "Facturas", page: "Nueva" };
+    } else if (path.match(/\/dashboard\/invoices\/\d+\/edit/)) {
+      return { section: "Facturas", page: "Editar" };
+    } else if (path.startsWith("/dashboard/invoices/")) {
+      return { section: "Facturas", page: "Detalle" };
     }
     return { section: "Dashboard", page: "Panel de Control" };
   };

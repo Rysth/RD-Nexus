@@ -13,6 +13,9 @@ import {
 import QuoteList from "../pages/dashboard/quotes/QuoteList";
 import QuoteForm from "../pages/dashboard/quotes/QuoteForm";
 import QuoteDetail from "../pages/dashboard/quotes/QuoteDetail";
+import InvoiceList from "../pages/dashboard/invoices/InvoiceList";
+import InvoiceForm from "../pages/dashboard/invoices/InvoiceForm";
+import InvoiceDetail from "../pages/dashboard/invoices/InvoiceDetail";
 import AuthSignIn from "../pages/auth/AuthSignIn";
 import AuthSignUp from "../pages/auth/AuthSignUp";
 import AuthConfirm from "../pages/auth/AuthConfirm";
@@ -127,6 +130,38 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRoles={["admin", "manager"]}>
             <QuoteForm mode="edit" />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "invoices",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <InvoiceList />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "invoices/new",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <InvoiceForm />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "invoices/:id",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <InvoiceDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "invoices/:id/edit",
+        element: (
+          <ProtectedRoute requiredRoles={["admin", "manager"]}>
+            <InvoiceForm />
           </ProtectedRoute>
         ),
       },

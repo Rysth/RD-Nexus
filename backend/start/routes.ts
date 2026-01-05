@@ -27,6 +27,7 @@ const ClientsController = () => import('#controllers/clients_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
 const RecurringServicesController = () => import('#controllers/recurring_services_controller')
 const QuotesController = () => import('#controllers/quotes_controller')
+const InvoicesController = () => import('#controllers/invoices_controller')
 
 // Health check
 router.get('/', async () => {
@@ -140,6 +141,21 @@ const apiV1 = router
             router.post('/:id/duplicate', [QuotesController, 'duplicate']).use(sensitiveThrottle)
           })
           .prefix('/quotes')
+
+        // Invoices management
+        router
+          .group(() => {
+            router.get('/stats', [InvoicesController, 'stats'])
+            router.get('/', [InvoicesController, 'index'])
+            router.post('/', [InvoicesController, 'store']).use(sensitiveThrottle)
+            router.post('/from-quote', [InvoicesController, 'convertFromQuote']).use(sensitiveThrottle)
+            router.get('/:id', [InvoicesController, 'show'])
+            router.put('/:id', [InvoicesController, 'update']).use(sensitiveThrottle)
+            router.delete('/:id', [InvoicesController, 'destroy']).use(sensitiveThrottle)
+            router.post('/:id/mark-paid', [InvoicesController, 'markAsPaid']).use(sensitiveThrottle)
+            router.post('/:id/void', [InvoicesController, 'voidInvoice']).use(sensitiveThrottle)
+          })
+          .prefix('/invoices')
       })
       .use(middleware.auth())
   })

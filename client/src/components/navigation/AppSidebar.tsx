@@ -111,6 +111,12 @@ export default function AppSidebar({
         show: canManageUsers,
       },
       {
+        to: "/dashboard/invoices",
+        label: "Facturas",
+        icon: FileText,
+        show: canManageUsers,
+      },
+      {
         to: "/dashboard/users",
         label: "Usuarios",
         icon: Users,
