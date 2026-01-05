@@ -51,21 +51,21 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 
 ---
 
-## Milestone 3 — Cotizaciones + PDF
+## Milestone 3 — Cotizaciones + PDF ✅
 **Objetivo**: crear cotizaciones con items y generar PDF.
 
 - DB/Modelos
-  - [ ] Migration `quotes` (project_id, issue_date, valid_until, status draft/sent/approved/rejected, total, timestamps)
-  - [ ] Migration `quote_items` (quote_id, description, quantity, unit_price, subtotal, timestamps)
+  - [x] Migration `quotes` (project_id, issue_date, valid_until, status draft/sent/approved/rejected, total, timestamps)
+  - [x] Migration `quote_items` (quote_id, description, quantity, unit_price, subtotal, timestamps)
 - API
-  - [ ] Crear quote con items anidados (transacción + recalcular total)
-  - [ ] Cambiar status (draft→sent→approved/rejected)
+  - [x] Crear quote con items anidados (transacción + recalcular total)
+  - [x] Cambiar status (draft→sent→approved/rejected)
 - PDF
-  - [ ] Servicio para generar PDF simple (logo RysthDesign)
+  - [x] Servicio para generar PDF simple (logo RysthDesign)
 - Frontend
-  - [ ] Tab "Cotizaciones": crear con items, ver detalle y descargar PDF
+  - [x] Tab "Cotizaciones": crear con items, ver detalle y descargar PDF
 - Done
-  - [ ] Crear cotización con 2+ items y descargar PDF coherente
+  - [x] Crear cotización con 2+ items y descargar PDF coherente
 
 ---
 
