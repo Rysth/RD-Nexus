@@ -472,14 +472,18 @@ export default function QuoteDetail() {
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0 bg-gray-100/95 backdrop-blur-sm">
+          <DialogHeader className="p-4 border-b bg-white">
             <DialogTitle>Vista Previa de Cotización</DialogTitle>
           </DialogHeader>
-          <div className="border rounded-lg overflow-hidden">
-            <QuotePrintTemplate quote={currentQuote} business={business} />
+
+          <div className="flex-1 overflow-y-auto p-6 flex justify-center">
+            <div className="bg-white shadow-2xl rounded-sm max-w-[210mm] w-full min-h-[297mm] mx-auto overflow-hidden">
+              <QuotePrintTemplate quote={currentQuote} business={business} />
+            </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
+
+          <div className="p-4 border-t bg-white flex justify-end gap-2">
             <Button variant="outline" onClick={() => setPreviewOpen(false)}>
               Cerrar
             </Button>
