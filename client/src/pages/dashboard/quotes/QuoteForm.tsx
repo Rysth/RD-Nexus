@@ -276,11 +276,9 @@ export default function QuoteForm() {
 
       if (isEdit && id) {
         await updateQuote(parseInt(id), payload);
-        toast.success("Cotización actualizada exitosamente");
         navigate(`/dashboard/quotes/${id}`);
       } else {
         const newQuote = await createQuote(payload);
-        toast.success("Cotización creada exitosamente");
         navigate(`/dashboard/quotes/${newQuote.id}`);
       }
     } catch (error: unknown) {

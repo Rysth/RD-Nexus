@@ -31,6 +31,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Edit,
   Trash2,
@@ -43,13 +49,15 @@ import {
   Building2,
   User,
   Calendar,
-  Printer,
+  Download,
+  Eye,
   AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
 import { useBusinessStore } from "@/stores/businessStore";
+import QuotePrintTemplate from "@/components/quotes/QuotePrintTemplate";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500",
@@ -83,6 +91,7 @@ export default function QuoteDetail() {
   const { business, fetchBusiness } = useBusinessStore();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -192,9 +201,13 @@ export default function QuoteDetail() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => handlePrint()}>
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir
+          <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+            <Eye className="mr-2 h-4 w-4" />
+            Vista Previa
+          </Button>
+          <Button onClick={() => handlePrint()}>
+            <Download className="mr-2 h-4 w-4" />
+            Descargar PDF
           </Button>
 
           <DropdownMenu>
@@ -268,188 +281,220 @@ export default function QuoteDetail() {
         </div>
       </div>
 
-      {/* Printable Content */}
-      <div ref={printRef} className="print:p-8">
-        {/* Info Cards */}
-        <div className="grid gap-6 md:grid-cols-3 mb-6">
-          {/* Client Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Cliente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-semibold">{currentQuote.client?.name}</div>
-              {currentQuote.client?.email && (
-                <div className="text-sm text-muted-foreground">
-                  {currentQuote.client.email}
-                </div>
-              )}
-              {currentQuote.client?.phone && (
-                <div className="text-sm text-muted-foreground">
-                  {currentQuote.client.phone}
-                </div>
-              )}
-              <Button
-                variant="link"
-                className="p-0 h-auto mt-2 print:hidden"
-                onClick={() =>
-                  navigate(`/dashboard/clients/${currentQuote.client_id}`)
-                }
-              >
-                Ver cliente →
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Project Info (if linked) */}
-          {currentQuote.project && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Proyecto
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="font-semibold">{currentQuote.project.name}</div>
-                <Badge variant="outline" className="mt-1">
-                  {currentQuote.project.status_label}
-                </Badge>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto mt-2 block print:hidden"
-                  onClick={() =>
-                    navigate(`/dashboard/projects/${currentQuote.project_id}`)
-                  }
-                >
-                  Ver proyecto →
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Dates */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Fechas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Emitida:</span>
-                <span className="font-medium">
-                  {format(new Date(currentQuote.issue_date), "dd MMM yyyy", {
-                    locale: es,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Válida hasta:</span>
-                <span
-                  className={`font-medium ${
-                    currentQuote.is_expired ? "text-red-500" : ""
-                  }`}
-                >
-                  {format(new Date(currentQuote.valid_until), "dd MMM yyyy", {
-                    locale: es,
-                  })}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Items Table */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Elementos de la Cotización</CardTitle>
+      {/* Info Cards - Visible in app */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Client Info */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Cliente
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50%]">Descripción</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Precio Unitario</TableHead>
-                  <TableHead className="text-right">Subtotal</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentQuote.items?.map((item, index) => (
-                  <TableRow key={item.id || index}>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right">
-                      {item.quantity}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(item.unit_price)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.subtotal)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {/* Totals */}
-            <div className="flex justify-end mt-6">
-              <div className="w-72 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">
-                    {formatCurrency(currentQuote.subtotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    IVA ({currentQuote.tax_rate}%):
-                  </span>
-                  <span className="font-medium">
-                    {formatCurrency(currentQuote.tax_amount)}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-lg">
-                  <span className="font-semibold">Total:</span>
-                  <span className="font-bold text-primary">
-                    {formatCurrency(currentQuote.total)}
-                  </span>
-                </div>
+            <div className="font-semibold">{currentQuote.client?.name}</div>
+            {currentQuote.client?.email && (
+              <div className="text-sm text-muted-foreground">
+                {currentQuote.client.email}
               </div>
-            </div>
+            )}
+            {currentQuote.client?.phone && (
+              <div className="text-sm text-muted-foreground">
+                {currentQuote.client.phone}
+              </div>
+            )}
+            <Button
+              variant="link"
+              className="p-0 h-auto mt-2"
+              onClick={() =>
+                navigate(`/dashboard/clients/${currentQuote.client_id}`)
+              }
+            >
+              Ver cliente →
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Notes */}
-        {currentQuote.notes && (
+        {/* Project Info (if linked) */}
+        {currentQuote.project && (
           <Card>
-            <CardHeader>
-              <CardTitle>Notas</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Proyecto
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap">{currentQuote.notes}</p>
+              <div className="font-semibold">{currentQuote.project.name}</div>
+              <Badge variant="outline" className="mt-1">
+                {currentQuote.project.status_label}
+              </Badge>
+              <Button
+                variant="link"
+                className="p-0 h-auto mt-2 block"
+                onClick={() =>
+                  navigate(`/dashboard/projects/${currentQuote.project_id}`)
+                }
+              >
+                Ver proyecto →
+              </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Business Info (for print) */}
-        <div className="hidden print:block mt-8 pt-4 border-t text-center text-sm text-muted-foreground">
-          {business && (
-            <>
-              <strong>{business.name}</strong>
-              {business.whatsapp && (
-                <span> | WhatsApp: {business.whatsapp}</span>
-              )}
-            </>
-          )}
-        </div>
+        {/* Dates */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Fechas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Emitida:</span>
+              <span className="font-medium">
+                {format(new Date(currentQuote.issue_date), "dd MMM yyyy", {
+                  locale: es,
+                })}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Válida hasta:</span>
+              <span
+                className={`font-medium ${
+                  currentQuote.is_expired ? "text-red-500" : ""
+                }`}
+              >
+                {format(new Date(currentQuote.valid_until), "dd MMM yyyy", {
+                  locale: es,
+                })}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Items Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Elementos de la Cotización</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50%]">Descripción</TableHead>
+                <TableHead className="text-right">Cantidad</TableHead>
+                <TableHead className="text-right">Precio Unitario</TableHead>
+                <TableHead className="text-right">Subtotal</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentQuote.items?.map((item, index) => (
+                <TableRow key={item.id || index}>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell className="text-right">{item.quantity}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.unit_price)}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatCurrency(item.subtotal)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {/* Totals */}
+          <div className="flex justify-end mt-6">
+            <div className="w-72 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span className="font-medium">
+                  {formatCurrency(currentQuote.subtotal)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  IVA ({currentQuote.tax_rate}%):
+                </span>
+                <span className="font-medium">
+                  {formatCurrency(currentQuote.tax_amount)}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between text-lg">
+                <span className="font-semibold">Total:</span>
+                <span className="font-bold text-primary">
+                  {formatCurrency(currentQuote.total)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
+      {currentQuote.notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Notas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap">{currentQuote.notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Terms and Conditions */}
+      {currentQuote.terms_conditions && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Términos y Condiciones</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap">
+              {currentQuote.terms_conditions}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hidden Print Template */}
+      <div className="hidden">
+        <QuotePrintTemplate
+          ref={printRef}
+          quote={currentQuote}
+          business={business}
+        />
+      </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vista Previa de Cotización</DialogTitle>
+          </DialogHeader>
+          <div className="border rounded-lg overflow-hidden">
+            <QuotePrintTemplate quote={currentQuote} business={business} />
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+              Cerrar
+            </Button>
+            <Button
+              onClick={() => {
+                setPreviewOpen(false);
+                handlePrint();
+              }}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Descargar PDF
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
