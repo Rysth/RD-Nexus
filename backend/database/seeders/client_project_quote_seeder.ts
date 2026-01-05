@@ -165,7 +165,7 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
       {
         clientKey: 'acme',
         projectKey: 'acme-site',
-        quoteNumber: 'Q-2026-0001',
+        quoteNumber: 'NXS-2026-000001',
         title: 'Renovacion sitio corporativo',
         issueDate: '2026-01-02',
         validUntil: '2026-01-16',
@@ -181,7 +181,7 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
       {
         clientKey: 'acme',
         projectKey: 'acme-app',
-        quoteNumber: 'Q-2026-0002',
+        quoteNumber: 'NXS-2026-000002',
         title: 'Portal de clientes - nuevas funcionalidades',
         issueDate: '2026-01-03',
         validUntil: '2026-02-02',
@@ -196,7 +196,7 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
       {
         clientKey: 'globex',
         projectKey: 'globex-erp',
-        quoteNumber: 'Q-2026-0003',
+        quoteNumber: 'NXS-2026-000003',
         title: 'Integraciones ERP y BI',
         issueDate: '2025-12-20',
         validUntil: '2026-01-03',
@@ -211,7 +211,7 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
       {
         clientKey: 'initech',
         projectKey: 'initech-subs',
-        quoteNumber: 'Q-2026-0004',
+        quoteNumber: 'NXS-2026-000004',
         title: 'Plataforma de suscripciones',
         issueDate: '2026-01-04',
         validUntil: '2026-01-18',
@@ -226,7 +226,7 @@ export default class ClientProjectQuoteSeeder extends BaseSeeder {
       {
         clientKey: 'globex',
         projectKey: null,
-        quoteNumber: 'Q-2026-0005',
+        quoteNumber: 'NXS-2026-000005',
         title: 'Soporte y horas bolsa',
         issueDate: '2026-01-05',
         validUntil: '2026-01-19',

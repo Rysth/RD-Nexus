@@ -230,9 +230,7 @@ export default function QuoteDetail() {
                 }
               })();
 
-              const businessName = business?.name
-                ? `\n\nDe parte de ${business.name}`
-                : "";
+              const businessName = "\n\nDe parte de Nexus by RysthDesign";
               const text =
                 `Saludos${
                   currentQuote.client?.name

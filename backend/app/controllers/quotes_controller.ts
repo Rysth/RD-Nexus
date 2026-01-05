@@ -51,13 +51,13 @@ const updateQuoteValidator = vine.compile(
 
 export default class QuotesController {
   /**
-   * Generate unique quote number: QUO-YYYYMMDD-XXXX
+   * Generate unique quote number: NXS-YYYY-XXXXXX (sequential per year)
    */
   private async generateQuoteNumber(): Promise<string> {
-    const today = DateTime.now().toFormat('yyyyMMdd')
-    const prefix = `QUO-${today}-`
+    const year = DateTime.now().toFormat('yyyy')
+    const prefix = `NXS-${year}-`
 
-    // Find the last quote number for today
+    // Find the last quote number for this year
     const lastQuote = await Quote.query()
       .where('quote_number', 'like', `${prefix}%`)
       .orderBy('quote_number', 'desc')
@@ -65,11 +65,12 @@ export default class QuotesController {
 
     let nextNumber = 1
     if (lastQuote) {
+      // NXS-YYYY-XXXXXX
       const lastNumber = parseInt(lastQuote.quoteNumber.split('-').pop() || '0', 10)
       nextNumber = lastNumber + 1
     }
 
-    return `${prefix}${String(nextNumber).padStart(4, '0')}`
+    return `${prefix}${String(nextNumber).padStart(6, '0')}`
   }
 
   /**
