@@ -445,8 +445,19 @@ layer(base);
   margin: 4px 0;
 }
 
+.quote-footer-powered {
+  margin-top: 12px;
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.quote-footer-powered strong {
+  color: #4b5563;
+}
+
 .quote-footer-website {
   color: #2563eb;
+  font-weight: 500;
 }
 
 /* ========================================

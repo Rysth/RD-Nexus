@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Quote } from "@/stores/quoteStore";
+import logo from "@/assets/logo.svg";
 
 interface Business {
   id: number;
@@ -44,22 +45,8 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
         {/* Header */}
         <div className="quote-header">
           <div className="quote-header-left">
-            {business?.logo_url ? (
-              <img
-                src={business.logo_url}
-                alt={business.name}
-                className="quote-logo"
-              />
-            ) : (
-              <div className="quote-logo-placeholder">
-                <span className="quote-logo-text">
-                  {business?.name?.charAt(0) || "R"}
-                </span>
-              </div>
-            )}
-            <div className="quote-business-name">
-              {business?.name || "Mi Empresa"}
-            </div>
+            <img src={logo} alt="RysthDesign" className="quote-logo" />
+            <div className="quote-business-name">RysthDesign</div>
           </div>
           <div className="quote-header-right">
             <h1 className="quote-title">COTIZACIÓN</h1>
@@ -236,9 +223,12 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
         {/* Footer */}
         <div className="quote-footer">
           <p>Gracias por su preferencia</p>
-          {business?.website && (
-            <p className="quote-footer-website">{business.website}</p>
-          )}
+          <div className="quote-footer-powered">
+            <p>
+              Powered by <strong>RysthDesign</strong>
+            </p>
+            <p className="quote-footer-website">www.rysthdesign.com</p>
+          </div>
         </div>
       </div>
     );
