@@ -206,21 +206,29 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
         </div>
 
         {/* Terms and Conditions */}
-        {quote.terms_conditions && (
-          <div className="quote-section">
-            <div className="quote-section-header">
-              <span>Términos y Condiciones</span>
+        <div className="quote-section">
+          <div className="quote-section-header">
+            <span>Términos y Condiciones</span>
+          </div>
+          <div className="quote-terms">
+            <div className="quote-term-item">
+              <span className="quote-term-number">1)</span>
+              <span className="quote-term-text">
+                <strong>Pagos y Validez:</strong> Se requiere un abono del 60%
+                para iniciar y el 40% restante contra entrega. Esta cotización
+                tiene una validez de 15 días.
+              </span>
             </div>
-            <div className="quote-terms">
-              {quote.terms_conditions.split("\n").map((line, index) => (
-                <div key={index} className="quote-term-item">
-                  <span className="quote-term-number">{index + 1})</span>
-                  <span className="quote-term-text">{line}</span>
-                </div>
-              ))}
+            <div className="quote-term-item">
+              <span className="quote-term-number">2)</span>
+              <span className="quote-term-text">
+                <strong>Requisitos y Alcance:</strong> El tiempo de entrega
+                inicia con la recepción de toda la información. No incluye
+                creación de contenido ni soporte no estipulado.
+              </span>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Notes */}
         {quote.notes && (
