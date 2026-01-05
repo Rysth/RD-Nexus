@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -68,12 +69,18 @@ start_containers() {
     yellow "docker compose -f docker-compose.dev.yml exec backend node ace migration:run"
   fi
 
-  blue "Ejecutando seeds de AdonisJS para poblar la base de datos de desarrollo..."
-  if docker compose -f docker-compose.dev.yml exec backend node ace db:seed; then
-    green "Base de datos poblada exitosamente."
+  # Preguntar antes de ejecutar seeds para no sobreescribir datos de desarrollo
+  read -r -p "¿Deseas ejecutar seeds de AdonisJS? (s/N): " run_seeds
+  if [[ "$run_seeds" =~ ^([sS][iI]?|[yY][eE]?[sS]?)$ ]]; then
+    blue "Ejecutando seeds de AdonisJS para poblar la base de datos de desarrollo..."
+    if docker compose -f docker-compose.dev.yml exec backend node ace db:seed; then
+      green "Base de datos poblada exitosamente."
+    else
+      yellow "Error al poblar la base de datos. Puedes ejecutarlo manualmente con:"
+      yellow "docker compose -f docker-compose.dev.yml exec backend node ace db:seed"
+    fi
   else
-    yellow "Error al poblar la base de datos. Puedes ejecutarlo manualmente con:"
-    yellow "docker compose -f docker-compose.dev.yml exec backend node ace db:seed"
+    yellow "Seeds omitidas por el usuario."
   fi
 
   green "============================================"
