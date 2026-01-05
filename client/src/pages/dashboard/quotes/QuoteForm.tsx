@@ -141,10 +141,22 @@ export default function QuoteForm() {
 
   // Populate form when editing
   useEffect(() => {
-    if (isEdit && currentQuote) {
+    // Wait for clients to load so the Select can resolve the label
+    if (isEdit && currentQuote && clients.length > 0) {
+      const safeClientId =
+        currentQuote.client_id !== undefined && currentQuote.client_id !== null
+          ? Number(currentQuote.client_id)
+          : undefined;
+      const safeProjectId =
+        currentQuote.project_id !== undefined &&
+        currentQuote.project_id !== null
+          ? Number(currentQuote.project_id)
+          : null;
+
       form.reset({
-        client_id: currentQuote.client_id,
-        project_id: currentQuote.project_id || null,
+        client_id: safeClientId ?? 0,
+        // Set after projects load so the Select can resolve the label
+        project_id: null,
         title: currentQuote.title,
         description: currentQuote.description || "",
         issue_date: currentQuote.issue_date,
@@ -168,21 +180,33 @@ export default function QuoteForm() {
       });
 
       // Cargar proyectos del cliente
-      if (currentQuote.client_id) {
-        loadProjectsForClient(currentQuote.client_id);
+      if (safeClientId) {
+        void (async () => {
+          const projects = await loadProjectsForClient(safeClientId);
+          if (
+            safeProjectId &&
+            projects.some((p) => Number(p.id) === safeProjectId)
+          ) {
+            form.setValue("project_id", safeProjectId, { shouldDirty: false });
+          }
+        })();
       }
     }
-  }, [isEdit, currentQuote, form]);
+  }, [isEdit, currentQuote, clients.length, form]);
 
   // Función para cargar proyectos de un cliente
-  const loadProjectsForClient = async (clientId: number) => {
+  const loadProjectsForClient = async (
+    clientId: number
+  ): Promise<Project[]> => {
     setLoadingProjects(true);
     try {
       const projects = await fetchProjectsByClient(clientId);
       setClientProjects(projects || []);
+      return projects || [];
     } catch (error) {
       console.error("Error loading projects:", error);
       setClientProjects([]);
+      return [];
     } finally {
       setLoadingProjects(false);
     }
@@ -190,7 +214,7 @@ export default function QuoteForm() {
 
   // Handle client change
   const handleClientChange = async (clientId: string) => {
-    const numClientId = parseInt(clientId);
+    const numClientId = Number.parseInt(clientId, 10);
     form.setValue("client_id", numClientId);
     form.setValue("project_id", null);
 
@@ -328,11 +352,15 @@ export default function QuoteForm() {
                         <FormItem>
                           <FormLabel>Cliente *</FormLabel>
                           <Select
-                            value={field.value ? String(field.value) : ""}
+                            value={
+                              field.value === undefined || field.value === null
+                                ? ""
+                                : String(field.value)
+                            }
                             onValueChange={handleClientChange}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Seleccionar cliente" />
                               </SelectTrigger>
                             </FormControl>
@@ -359,7 +387,11 @@ export default function QuoteForm() {
                         <FormItem>
                           <FormLabel>Proyecto (opcional)</FormLabel>
                           <Select
-                            value={field.value ? String(field.value) : "none"}
+                            value={
+                              field.value === null || field.value === undefined
+                                ? "none"
+                                : String(field.value)
+                            }
                             onValueChange={(v) =>
                               field.onChange(v === "none" ? null : parseInt(v))
                             }
@@ -368,7 +400,7 @@ export default function QuoteForm() {
                             }
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full">
                                 <SelectValue
                                   placeholder={
                                     loadingProjects
