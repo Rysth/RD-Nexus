@@ -4,6 +4,7 @@ import QuoteItem from '#models/quote_item'
 import Client from '#models/client'
 import Project from '#models/project'
 import CacheService from '#services/cache_service'
+import InvoiceService from '#services/invoice_service'
 import db from '@adonisjs/lucid/services/db'
 import vine from '@vinejs/vine'
 import { DateTime } from 'luxon'
@@ -475,6 +476,28 @@ export default class QuotesController {
     quote.status = status
     await quote.save()
 
+    // Si el estado cambia a 'approved', crear factura automáticamente
+    let createdInvoice = null
+    if (status === 'approved') {
+      try {
+        const invoiceService = new InvoiceService()
+        const invoice = await invoiceService.createFromQuote(quote.id, 30)
+        await invoice.load('items')
+        await invoice.load('client')
+        createdInvoice = {
+          ...invoice.serializeForApi(),
+          client: invoice.client?.serializeForApi(),
+          items: invoice.items?.map((item) => item.serializeForApi()),
+        }
+        
+        // Invalidar cache de invoices también
+        await CacheService.deleteMatched('invoices:*')
+      } catch (error) {
+        // Si ya existe una factura, no es un error crítico
+        console.warn('No se pudo crear factura automáticamente:', (error as Error).message)
+      }
+    }
+
     await quote.load('client')
     await quote.load('project')
     await quote.load('items')
@@ -486,6 +509,7 @@ export default class QuotesController {
       client: quote.client?.serializeForApi(),
       project: quote.project?.serializeForApi(),
       items: quote.items?.map((item) => item.serializeForApi()),
+      created_invoice: createdInvoice,
     })
   }
 
