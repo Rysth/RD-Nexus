@@ -1,6 +1,7 @@
 import { Job } from 'adonisjs-jobs'
 import mail from '@adonisjs/mail/services/main'
 import env from '#start/env'
+import logger from '@adonisjs/core/services/logger'
 
 interface SendBillingNotificationPayload {
   invoiceId: number
@@ -78,16 +79,16 @@ export default class SendBillingNotificationEmail extends Job {
       })
 
       if (isInternalNotification) {
-        this.logger.info(
+        logger.info(
           `[SendBillingNotification] Internal notification sent for invoice ${invoiceNumber} (client ${clientName} has no email)`
         )
       } else {
-        this.logger.info(
+        logger.info(
           `[SendBillingNotification] Billing notification sent to ${recipientEmail} for invoice ${invoiceNumber}`
         )
       }
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `[SendBillingNotification] Failed to send email for invoice ${invoiceNumber}:`,
         error
       )
@@ -125,7 +126,7 @@ export default class SendBillingNotificationEmail extends Job {
    * Handle job failure after all retries exhausted
    */
   async rescue(error: Error, payload: SendBillingNotificationPayload) {
-    this.logger.error(
+    logger.error(
       `[SendBillingNotification] Failed to send email for invoice ${payload.invoiceNumber} after all retries:`,
       error
     )

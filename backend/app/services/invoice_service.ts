@@ -131,11 +131,12 @@ export default class InvoiceService {
       const issueDate = DateTime.now()
       const dueDate = issueDate.plus({ days: dueDays })
 
-      // Calculate totals (using default 15% tax rate for recurring services)
-      const taxRate = 15
+      // Auto-generated invoices from recurring services have 0% tax (IVA exento)
+      // User can manually edit if tax is needed
+      const taxRate = 0
       const subtotal = Number(service.amount)
-      const taxAmount = subtotal * (taxRate / 100)
-      const total = subtotal + taxAmount
+      const taxAmount = 0
+      const total = subtotal
 
       // Build description with billing period
       const billingPeriod =

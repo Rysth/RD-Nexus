@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import RecurringService from '#models/recurring_service'
 import InvoiceService from '#services/invoice_service'
 import SendBillingNotificationEmail from '#jobs/send_billing_notification_email'
+import CacheService from '#services/cache_service'
 import logger from '@adonisjs/core/services/logger'
 
 /**
@@ -35,7 +36,7 @@ export default class BillingReminder extends Job {
     const today = DateTime.now().startOf('day')
 
     try {
-      this.logger.info('[BillingReminder] Starting billing reminder job...')
+      logger.info('[BillingReminder] Starting billing reminder job...')
 
       // Find all active recurring services with next_billing_date = today
       const servicesToBill = await RecurringService.query()
@@ -43,7 +44,7 @@ export default class BillingReminder extends Job {
         .where('next_billing_date', '<=', today.toSQLDate())
         .preload('project', (query) => query.preload('client'))
 
-      this.logger.info(`[BillingReminder] Found ${servicesToBill.length} services to bill`)
+      logger.info(`[BillingReminder] Found ${servicesToBill.length} services to bill`)
 
       let invoicesGenerated = 0
       let errors = 0
@@ -58,7 +59,7 @@ export default class BillingReminder extends Job {
           await invoice.load('project')
           await invoice.load('items')
 
-          this.logger.info(
+          logger.info(
             `[BillingReminder] Generated invoice ${invoice.invoiceNumber} for service "${service.name}" (${service.project.name})`
           )
 
@@ -77,7 +78,7 @@ export default class BillingReminder extends Job {
           invoicesGenerated++
         } catch (error) {
           errors++
-          this.logger.error(
+          logger.error(
             `[BillingReminder] Failed to process service ${service.id} (${service.name}):`,
             error
           )
@@ -85,18 +86,25 @@ export default class BillingReminder extends Job {
         }
       }
 
-      this.logger.info(
+      logger.info(
         `[BillingReminder] Completed. Generated ${invoicesGenerated} invoices, ${errors} errors`
       )
 
-      // Reschedule the job to run again tomorrow at 8:00 AM
-      const nextRun = this.calculateNextRunTime()
-      await BillingReminder.dispatch({}, { delay: nextRun })
-      this.logger.info(
-        `[BillingReminder] Job rescheduled for ${DateTime.now().plus({ milliseconds: nextRun }).toISO()}`
-      )
+      // Invalidate invoice caches so new records are visible immediately
+      if (invoicesGenerated > 0) {
+        await CacheService.deleteMatched('invoices:*')
+      }
+
+      // Reschedule the job to run again tomorrow at 8:00 AM (only when running in queue)
+      if (this.logger) {
+        const nextRun = this.calculateNextRunTime()
+        await BillingReminder.dispatch({}, { delay: nextRun })
+        logger.info(
+          `[BillingReminder] Job rescheduled for ${DateTime.now().plus({ milliseconds: nextRun }).toISO()}`
+        )
+      }
     } catch (error) {
-      this.logger.error('[BillingReminder] Critical error in billing reminder job:', error)
+      logger.error('[BillingReminder] Critical error in billing reminder job:', error)
       throw error // Re-throw to trigger retry mechanism
     }
   }
