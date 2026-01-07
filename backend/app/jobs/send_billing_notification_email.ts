@@ -53,9 +53,11 @@ export default class SendBillingNotificationEmail extends Job {
       dueDate,
     } = payload
 
-    // Use client email if available, otherwise fallback to admin
-    const recipientEmail = clientEmail || SendBillingNotificationEmail.FALLBACK_EMAIL
-    const isInternalNotification = !clientEmail
+    // For now, always send to admin as a reminder (skip client emails)
+    // TODO: Enable client emails when ready for production
+    const recipientEmail = SendBillingNotificationEmail.FALLBACK_EMAIL
+    const isInternalNotification = true
+    const _clientEmail = clientEmail // Keep reference for future use
 
     try {
       await mail.send((message) => {
