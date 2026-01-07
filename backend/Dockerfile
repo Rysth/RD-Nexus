@@ -39,6 +39,10 @@ FROM base
 COPY --from=build /app/build /app
 COPY --from=build /app/node_modules /app/node_modules
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3333
-CMD [ "node", "bin/server.js" ]
+CMD [ "/app/docker-entrypoint.sh" ]
