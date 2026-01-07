@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Invoice } from "@/stores/invoiceStore";
-import logo from "@/assets/logo.svg";
+import logo from "@/assets/logo.png";
 
 interface Business {
   id: number;

@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useBusinessStore } from "../../stores/businessStore";
-import logo from "../../assets/logo.svg";
+import logo from "../../assets/logo.png";
 
 interface AppSidebarProps {
   user: any;
@@ -139,7 +139,7 @@ export default function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <NavLink to="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <div className="flex items-center justify-center rounded-lg aspect-square size-8 bg-sidebar-primary text-sidebar-primary-foreground">
                   {publicBusiness?.logo_url ? (
                     <img
                       src={publicBusiness.logo_url}
@@ -150,11 +150,11 @@ export default function AppSidebar({
                     <img src={logo} alt="Logo" className="size-4" />
                   )}
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
+                <div className="grid flex-1 text-sm leading-tight text-left">
+                  <span className="font-semibold truncate">
                     {publicBusiness?.name || "Academy"}
                   </span>
-                  <span className="truncate text-xs">Dashboard</span>
+                  <span className="text-xs truncate">Dashboard</span>
                 </div>
               </NavLink>
             </SidebarMenuButton>
@@ -200,16 +200,16 @@ export default function AppSidebar({
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="w-8 h-8 rounded-lg">
                     <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                       {getInitials(user.fullname)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
+                  <div className="grid flex-1 text-sm leading-tight text-left">
+                    <span className="font-semibold truncate">
                       {user.fullname}
                     </span>
-                    <span className="truncate text-xs">@{user.username}</span>
+                    <span className="text-xs truncate">@{user.username}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -222,16 +222,16 @@ export default function AppSidebar({
               >
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg">
+                    <Avatar className="w-8 h-8 rounded-lg">
                       <AvatarFallback className="rounded-lg">
                         {getInitials(user.fullname)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
+                    <div className="grid flex-1 text-sm leading-tight text-left">
+                      <span className="font-semibold truncate">
                         {user.fullname}
                       </span>
-                      <span className="truncate text-xs">{user.email}</span>
+                      <span className="text-xs truncate">{user.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

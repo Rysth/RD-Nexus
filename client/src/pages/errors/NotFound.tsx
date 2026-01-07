@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import logo from "../../assets/logo.svg";
+import logo from "../../assets/logo.png";
 
 const DASHBOARD_ROLES = ["admin", "manager", "operator"];
 
@@ -62,26 +62,26 @@ export default function NotFound() {
   }, [navigate, location.pathname, user]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-slate-50">
       <div className="flex items-center gap-3 mb-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 shadow-sm">
+        <div className="p-2 rounded-lg shadow-sm bg-gradient-to-br from-blue-500 to-blue-600">
           <img src={logo} alt="Logo MicroStock" className="w-8 h-8" />
         </div>
-        <h1 className="font-bold text-2xl bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text">
           MicroStock
         </h1>
       </div>
 
-      <h2 className="text-6xl font-bold text-slate-800 mb-4">404</h2>
-      <p className="text-2xl font-semibold text-slate-700 mb-2">
+      <h2 className="mb-4 text-6xl font-bold text-slate-800">404</h2>
+      <p className="mb-2 text-2xl font-semibold text-slate-700">
         Página no encontrada
       </p>
-      <p className="text-slate-500 mb-8">
+      <p className="mb-8 text-slate-500">
         La página que buscas no existe o ha sido movida.
       </p>
 
-      <div className="h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-      <p className="text-sm text-slate-500 mt-4">
+      <div className="w-12 h-12 border-4 border-blue-200 rounded-full border-t-blue-600 animate-spin"></div>
+      <p className="mt-4 text-sm text-slate-500">
         Serás redirigido automáticamente en unos segundos...
       </p>
     </div>
