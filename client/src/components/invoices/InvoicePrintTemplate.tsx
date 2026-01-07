@@ -48,7 +48,19 @@ const InvoicePrintTemplate = forwardRef<
       <div className="quote-header">
         <div className="quote-header-left">
           <img src={logo} alt="RysthDesign" className="quote-logo" />
-          <div className="quote-business-name">RysthDesign</div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div className="quote-business-name">Nexus</div>
+            <div
+              style={{
+                fontSize: "0.9em",
+                fontStyle: "italic",
+                color: "#6b7280",
+                lineHeight: "1",
+              }}
+            >
+              By RysthDesign
+            </div>
+          </div>
         </div>
         <div className="quote-header-right">
           <h1 className="quote-title">FACTURA</h1>
