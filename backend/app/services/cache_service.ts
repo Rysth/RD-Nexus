@@ -162,4 +162,14 @@ export default class CacheService {
       await this.deleteMatched(`client:${clientId}:show`)
     }
   }
+
+  /**
+   * Invalidate recurring services caches
+   */
+  static async invalidateRecurringServices(projectId?: number): Promise<void> {
+    await this.deleteMatched('recurring_services:*')
+    if (projectId) {
+      await this.deleteMatched(`project:${projectId}:recurring_services:*`)
+    }
+  }
 }

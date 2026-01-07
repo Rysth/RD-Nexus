@@ -90,9 +90,10 @@ export default class BillingReminder extends Job {
         `[BillingReminder] Completed. Generated ${invoicesGenerated} invoices, ${errors} errors`
       )
 
-      // Invalidate invoice caches so new records are visible immediately
+      // Invalidate caches so new records are visible immediately
       if (invoicesGenerated > 0) {
         await CacheService.deleteMatched('invoices:*')
+        await CacheService.invalidateRecurringServices()
       }
 
       // Reschedule the job to run again tomorrow at 8:00 AM (only when running in queue)
