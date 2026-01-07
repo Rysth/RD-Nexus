@@ -202,8 +202,9 @@ export default class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await Invoice.findOrFail(invoiceId)
 
+    // Idempotente: si ya está pagada, devolvemos sin error
     if (invoice.status === 'paid') {
-      throw new Error('La factura ya está marcada como pagada')
+      return invoice
     }
 
     if (invoice.status === 'voided') {
@@ -229,8 +230,9 @@ export default class InvoiceService {
       throw new Error('No se puede anular una factura pagada')
     }
 
+    // Idempotente: si ya está anulada, devolvemos la factura sin error
     if (invoice.status === 'voided') {
-      throw new Error('La factura ya está anulada')
+      return invoice
     }
 
     invoice.status = 'voided'
