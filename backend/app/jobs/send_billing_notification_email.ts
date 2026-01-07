@@ -57,7 +57,6 @@ export default class SendBillingNotificationEmail extends Job {
     // TODO: Enable client emails when ready for production
     const recipientEmail = SendBillingNotificationEmail.FALLBACK_EMAIL
     const isInternalNotification = true
-    const _clientEmail = clientEmail // Keep reference for future use
 
     try {
       await mail.send((message) => {
@@ -70,6 +69,7 @@ export default class SendBillingNotificationEmail extends Job {
           )
           .htmlView('emails/billing_notification', {
             clientName,
+            clientEmail,
             serviceName,
             projectName,
             invoiceNumber,
@@ -82,7 +82,7 @@ export default class SendBillingNotificationEmail extends Job {
 
       if (isInternalNotification) {
         logger.info(
-          `[SendBillingNotification] Internal notification sent for invoice ${invoiceNumber} (client ${clientName} has no email)`
+          `[SendBillingNotification] Internal billing reminder sent to ${recipientEmail} for invoice ${invoiceNumber} (client ${clientName})`
         )
       } else {
         logger.info(

@@ -48,11 +48,14 @@ export default class BillingReminder extends Job {
 
       let invoicesGenerated = 0
       let errors = 0
+      const touchedProjectIds = new Set<number>()
 
       for (const service of servicesToBill) {
         try {
           // Generate invoice from recurring service
           const invoice = await invoiceService.createFromRecurringService(service.id)
+
+          touchedProjectIds.add(service.projectId)
 
           // Load relations for email
           await invoice.load('client')
@@ -93,7 +96,9 @@ export default class BillingReminder extends Job {
       // Invalidate caches so new records are visible immediately
       if (invoicesGenerated > 0) {
         await CacheService.deleteMatched('invoices:*')
-        await CacheService.invalidateRecurringServices()
+        for (const projectId of touchedProjectIds) {
+          await CacheService.invalidateRecurringServices(projectId)
+        }
       }
 
       // Reschedule the job to run again tomorrow at 8:00 AM (only when running in queue)

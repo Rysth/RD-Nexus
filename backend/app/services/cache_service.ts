@@ -167,7 +167,14 @@ export default class CacheService {
    * Invalidate recurring services caches
    */
   static async invalidateRecurringServices(projectId?: number): Promise<void> {
+    // Some endpoints cache recurring services under keys like:
+    //   project:{id}:recurring_services:project:{id}:page:{n}:per_page:{n}:status:
+    // So we must invalidate project-scoped keys.
+    await this.deleteMatched('project:*:recurring_services:*')
+
+    // Backward/alternate patterns (if added in future)
     await this.deleteMatched('recurring_services:*')
+
     if (projectId) {
       await this.deleteMatched(`project:${projectId}:recurring_services:*`)
     }
