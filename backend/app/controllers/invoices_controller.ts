@@ -201,7 +201,7 @@ export default class InvoicesController {
     })
 
     // Invalidate cache
-    await CacheService.deletePattern('invoices:*')
+    await CacheService.deleteMatched('invoices:*')
 
     // Load relations for response
     await invoice.load('client')
@@ -280,7 +280,7 @@ export default class InvoicesController {
     })
 
     // Invalidate cache
-    await CacheService.deletePattern('invoices:*')
+    await CacheService.deleteMatched('invoices:*')
 
     // Load relations for response
     await invoice.load('client')
@@ -311,7 +311,7 @@ export default class InvoicesController {
     await invoice.delete()
 
     // Invalidate cache
-    await CacheService.deletePattern('invoices:*')
+    await CacheService.deleteMatched('invoices:*')
 
     return response.noContent()
   }
@@ -327,8 +327,8 @@ export default class InvoicesController {
       const invoice = await this.invoiceService.createFromQuote(data.quote_id, data.due_days ?? 30)
 
       // Invalidate cache
-      await CacheService.deletePattern('invoices:*')
-      await CacheService.deletePattern('quotes:*')
+      await CacheService.deleteMatched('invoices:*')
+      await CacheService.deleteMatched('quotes:*')
 
       // Load relations
       await invoice.load('client')
@@ -363,7 +363,7 @@ export default class InvoicesController {
       )
 
       // Invalidate cache
-      await CacheService.deletePattern('invoices:*')
+      await CacheService.deleteMatched('invoices:*')
 
       // Load relations
       await invoice.load('client')
@@ -392,7 +392,7 @@ export default class InvoicesController {
       const invoice = await this.invoiceService.voidInvoice(params.id)
 
       // Invalidate cache
-      await CacheService.deletePattern('invoices:*')
+      await CacheService.deleteMatched('invoices:*')
 
       // Load relations
       await invoice.load('client')
