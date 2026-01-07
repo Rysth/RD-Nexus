@@ -52,13 +52,11 @@ export default class ProductionSeeder extends BaseSeeder {
     if (!business) {
       business = await Business.create({
         name: 'Nexus',
-        legalName: 'RysthDesign',
-        ruc: '0931237663001',
-        email: 'support@rysthdesign.com',
-        phone: '0988949117',
+        slogan: 'by RysthDesign',
         whatsapp: '0988949117',
-        address: 'Ecuador',
-        website: 'https://www.rysthdesign.com',
+        instagram: 'rysthdesign',
+        facebook: 'rysthdesign',
+        tiktok: 'rysthdesign',
       })
       console.log('  ✓ Business created: Nexus by RysthDesign')
     } else {
