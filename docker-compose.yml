@@ -12,7 +12,7 @@ services:
     depends_on:
       - backend
     networks:
-      - app_name_network
+      - nexus_network
 
   backend:
     build:
@@ -51,7 +51,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_QUEUE=${REDIS_QUEUE:-default}
     networks:
-      - app_name_network
+      - nexus_network
 
   jobs:
     build:
@@ -91,8 +91,8 @@ services:
     depends_on:
       - backend
     networks:
-      - app_name_network
+      - nexus_network
 
 networks:
-  app_name_network:
+  nexus_network:
     driver: bridge
