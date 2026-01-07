@@ -278,15 +278,17 @@ export default class ClientsController {
       ])
     })
 
-    sheet.columns?.forEach((column) => {
+    for (const column of sheet.columns ?? []) {
+      if (!column || typeof (column as any).eachCell !== 'function') continue
+
       // Autosize basic columns to content length
       let maxLength = 10
-      column.eachCell({ includeEmpty: true }, (cell) => {
-        const cellValue = cell.value ? cell.value.toString() : ''
+      ;(column as any).eachCell({ includeEmpty: true }, (cell: any) => {
+        const cellValue = cell?.value ? String(cell.value) : ''
         maxLength = Math.max(maxLength, cellValue.length)
       })
-      column.width = Math.min(maxLength + 2, 40)
-    })
+      ;(column as any).width = Math.min(maxLength + 2, 40)
+    }
 
     const buffer = await workbook.xlsx.writeBuffer()
 

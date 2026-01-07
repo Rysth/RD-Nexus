@@ -42,7 +42,7 @@ export default class BillingReminder extends Job {
       const servicesToBill = await RecurringService.query()
         .where('status', 'active')
         .where('next_billing_date', '<=', today.toSQLDate())
-        .preload('project', (query) => query.preload('client'))
+        .preload('project' as any, (query: any) => query.preload('client'))
 
       logger.info(`[BillingReminder] Found ${servicesToBill.length} services to bill`)
 
@@ -59,7 +59,7 @@ export default class BillingReminder extends Job {
 
           // Load relations for email
           await invoice.load('client')
-          await invoice.load('project')
+          await invoice.load('project' as any)
           await invoice.load('items')
 
           logger.info(

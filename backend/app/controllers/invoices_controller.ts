@@ -65,10 +65,10 @@ export default class InvoicesController {
       async () => {
         let query = Invoice.query()
           .preload('client')
-          .preload('project')
+          .preload('project' as any)
           .preload('items')
-          .preload('quote')
-          .preload('recurringService')
+          .preload('quote' as any)
+          .preload('recurringService' as any)
 
         // Filter by client
         if (clientId) {
@@ -125,10 +125,10 @@ export default class InvoicesController {
         const invoice = await Invoice.query()
           .where('id', params.id)
           .preload('client')
-          .preload('project')
+          .preload('project' as any)
           .preload('items', (query) => query.orderBy('sort_order', 'asc'))
-          .preload('quote')
-          .preload('recurringService')
+          .preload('quote' as any)
+          .preload('recurringService' as any)
           .firstOrFail()
 
         return {
@@ -205,7 +205,7 @@ export default class InvoicesController {
 
     // Load relations for response
     await invoice.load('client')
-    await invoice.load('project')
+      await invoice.load('project' as any)
     await invoice.load('items')
 
     return response.created({
@@ -284,7 +284,7 @@ export default class InvoicesController {
 
     // Load relations for response
     await invoice.load('client')
-    await invoice.load('project')
+      await invoice.load('project' as any)
     await invoice.load('items')
 
     return response.ok({
@@ -332,7 +332,7 @@ export default class InvoicesController {
 
       // Load relations
       await invoice.load('client')
-      await invoice.load('project')
+        await invoice.load('project' as any)
       await invoice.load('items')
 
       return response.created({
@@ -367,7 +367,7 @@ export default class InvoicesController {
 
       // Load relations
       await invoice.load('client')
-      await invoice.load('project')
+        await invoice.load('project' as any)
       await invoice.load('items')
 
       return response.ok({
@@ -396,7 +396,7 @@ export default class InvoicesController {
 
       // Load relations
       await invoice.load('client')
-      await invoice.load('project')
+        await invoice.load('project' as any)
       await invoice.load('items')
 
       return response.ok({

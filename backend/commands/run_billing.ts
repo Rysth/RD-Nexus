@@ -22,7 +22,7 @@ export default class RunBilling extends BaseCommand {
     const servicesToBill = await RecurringService.query()
       .where('status', 'active')
       .where('next_billing_date', '<=', today.toSQLDate())
-      .preload('project', (query) => query.preload('client'))
+      .preload('project' as any, (query: any) => query.preload('client'))
 
     if (servicesToBill.length === 0) {
       this.logger.warning('No recurring services due for billing today')
@@ -33,7 +33,7 @@ export default class RunBilling extends BaseCommand {
         .where('status', 'active')
         .orderBy('next_billing_date', 'asc')
         .limit(5)
-        .preload('project')
+        .preload('project' as any)
 
       if (upcoming.length > 0) {
         this.logger.info('Upcoming services:')

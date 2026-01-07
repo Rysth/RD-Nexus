@@ -61,7 +61,7 @@ export default class RecurringServicesController {
     const payload = await CacheService.fetch(
       cacheKey,
       async () => {
-        let query = RecurringService.query().preload('project', (projectQuery) => {
+        let query = RecurringService.query().preload('project' as any, (projectQuery: any) => {
           projectQuery.preload('client')
         })
 
@@ -114,7 +114,7 @@ export default class RecurringServicesController {
       async () => {
         const service = await RecurringService.query()
           .where('id', serviceId)
-          .preload('project', (projectQuery) => {
+          .preload('project' as any, (projectQuery: any) => {
             projectQuery.preload('client')
           })
           .first()
@@ -161,7 +161,7 @@ export default class RecurringServicesController {
       description: data.description || null,
     })
 
-    await service.load('project', (projectQuery) => {
+    await service.load('project' as any, (projectQuery: any) => {
       projectQuery.preload('client')
     })
 
@@ -207,7 +207,7 @@ export default class RecurringServicesController {
     })
 
     await service.save()
-    await service.load('project', (projectQuery) => {
+    await service.load('project' as any, (projectQuery: any) => {
       projectQuery.preload('client')
     })
 
@@ -304,7 +304,7 @@ export default class RecurringServicesController {
     service.status = service.status === 'active' ? 'paused' : 'active'
     await service.save()
 
-    await service.load('project', (projectQuery) => {
+    await service.load('project' as any, (projectQuery: any) => {
       projectQuery.preload('client')
     })
 

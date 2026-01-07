@@ -53,14 +53,14 @@ export default class DashboardController {
           // Recent invoices (last 5)
           Invoice.query()
             .preload('client')
-            .preload('project')
+            .preload('project' as any)
             .orderBy('created_at', 'desc')
             .limit(5),
           // Upcoming billing (next 7 days)
           RecurringService.query()
             .where('status', 'active')
             .where('next_billing_date', '<=', DateTime.now().plus({ days: 7 }).toSQLDate())
-            .preload('project', (q) => q.preload('client'))
+            .preload('project' as any, (q: any) => q.preload('client'))
             .orderBy('next_billing_date', 'asc')
             .limit(5),
         ])

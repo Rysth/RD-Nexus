@@ -117,7 +117,7 @@ export default class InvoiceService {
     // Load service with project and client
     const service = await RecurringService.query()
       .where('id', recurringServiceId)
-      .preload('project', (query) => query.preload('client'))
+      .preload('project' as any, (query: any) => query.preload('client'))
       .firstOrFail()
 
     // Validate service is active

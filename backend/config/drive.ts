@@ -20,7 +20,7 @@ const driveConfig = defineConfig({
       serveFiles: true,
       routeBasePath: '/uploads',
       visibility: 'public',
-      appUrl: env.get('APP_URL', undefined),
+      appUrl: env.get('APP_URL', 'http://localhost:3333'),
     }),
 
     /**

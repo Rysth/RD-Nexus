@@ -118,7 +118,7 @@ export default class QuotesController {
       async () => {
         let query = Quote.query()
           .preload('client')
-          .preload('project')
+          .preload('project' as any)
           .preload('items')
 
         // Filter by client
@@ -173,7 +173,7 @@ export default class QuotesController {
         const quote = await Quote.query()
           .where('id', quoteId)
           .preload('client')
-          .preload('project')
+          .preload('project' as any)
           .preload('items', (itemsQuery) => {
             itemsQuery.orderBy('sort_order', 'asc')
           })
@@ -273,7 +273,7 @@ export default class QuotesController {
 
     // Load relations
     await quote.load('client')
-    await quote.load('project')
+      await quote.load('project' as any)
     await quote.load('items')
 
     await this.invalidateCache(quote.id, data.client_id, data.project_id)
@@ -401,7 +401,7 @@ export default class QuotesController {
 
     // Reload with relations
     await quote.load('client')
-    await quote.load('project')
+      await quote.load('project' as any)
     await quote.load('items')
 
     await this.invalidateCache(quote.id, quote.clientId, quote.projectId)
@@ -499,7 +499,7 @@ export default class QuotesController {
     }
 
     await quote.load('client')
-    await quote.load('project')
+    await quote.load('project' as any)
     await quote.load('items')
 
     await this.invalidateCache(quote.id, quote.clientId, quote.projectId)
@@ -567,7 +567,7 @@ export default class QuotesController {
     })
 
     await newQuote.load('client')
-    await newQuote.load('project')
+      await newQuote.load('project' as any)
     await newQuote.load('items')
 
     await this.invalidateCache(newQuote.id, newQuote.clientId, newQuote.projectId)
