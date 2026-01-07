@@ -86,19 +86,21 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 
 ---
 
-## Milestone 5 — Scheduler + BillingReminder
+## Milestone 5 — Scheduler + BillingReminder ✅
 **Objetivo**: automatizar facturas recurrentes y correos.
 
 - Infra
-  - [ ] Configurar `@adonisjs/scheduler`
+  - [x] Jobs queue con `adonisjs-jobs` (ya configurado)
 - Job
-  - [ ] `BillingReminder` diario 8:00 AM
-  - [ ] Buscar `recurring_services` con next_billing_date = hoy (o hoy+3)
-  - [ ] Generar invoice automática por servicio
-  - [ ] Enviar email: "Hola [Cliente], tu factura por [Servicio] del proyecto [Proyecto] ya está generada por un valor de [Monto]"
-  - [ ] Actualizar next_billing_date (+1 mes o +1 año)
+  - [x] `BillingReminder` se ejecuta diariamente a las 8:00 AM
+  - [x] Busca `recurring_services` activos con `next_billing_date <= hoy`
+  - [x] Genera invoice automática por servicio usando `InvoiceService.createFromRecurringService()`
+  - [x] Envía email al cliente (o fallback a johnpalacios.t@gmail.com si no tiene email)
+  - [x] Actualiza `next_billing_date` (+1 mes o +1 año según ciclo)
+- Frontend
+  - [x] Comando ACE `node ace billing:run` para ejecución manual en dev
 - Done
-  - [ ] Job ejecutado manual en dev genera facturas y se ve en Mailpit
+  - [x] Job ejecutado manual en dev genera facturas y emails visibles en Mailpit
 
 ---
 
