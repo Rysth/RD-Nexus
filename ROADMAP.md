@@ -73,16 +73,16 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 **Objetivo**: facturar cotizaciones aprobadas y cobros recurrentes.
 
 - DB/Modelos
-  - [ ] Migration `invoices` (project_id, number secuencial, issue_date, due_date, status pending/paid/voided, total, access_key, xml_content, timestamps)
-  - [ ] (Opcional) `invoice_items` si se quiere simetría con quotes
-  - [ ] Tabla `taxes` preparada para IVA configurable (default 0%/exento)
+  - [x] Migration `invoices` (project_id, number secuencial, issue_date, due_date, status pending/paid/voided, total, access_key, xml_content, timestamps)
+  - [x] `invoice_items` (simetría con quotes)
+  - [ ] (Opcional/futuro) Tabla `taxes` preparada para IVA configurable (default 0%/exento)
 - API
-  - [ ] Servicio: quote aprobada → invoice + items copiados
+  - [x] Servicio: quote aprobada → invoice + items copiados
 - Frontend
-  - [ ] Tab "Facturas": listar/ver estado
-  - [ ] En detalle de cotización: botón "Convertir a Factura"
+  - [x] Tab "Facturas": listar/ver estado
+  - [x] En detalle de cotización: botón "Convertir a Factura"
 - Done
-  - [ ] Quote aprobada se convierte en invoice en 1 clic conservando items/total
+  - [x] Quote aprobada se convierte en invoice en 1 clic conservando items/total
 
 ---
 
