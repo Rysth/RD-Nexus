@@ -28,6 +28,7 @@ const ProjectsController = () => import('#controllers/projects_controller')
 const RecurringServicesController = () => import('#controllers/recurring_services_controller')
 const QuotesController = () => import('#controllers/quotes_controller')
 const InvoicesController = () => import('#controllers/invoices_controller')
+const DashboardController = () => import('#controllers/dashboard_controller')
 
 // Health check
 router.get('/', async () => {
@@ -71,6 +72,9 @@ const apiV1 = router
         router.post('/logout', [AuthController, 'logout'])
         router.put('/profile/update_info', [AuthController, 'updateProfile']).use(sensitiveThrottle)
         router.put('/profile/update_password', [AuthController, 'updatePassword']).use(sensitiveThrottle)
+
+        // Dashboard stats
+        router.get('/dashboard/stats', [DashboardController, 'stats'])
 
         // Business management (admin/manager only)
         router.get('/businesses/current', [BusinessesController, 'current'])
