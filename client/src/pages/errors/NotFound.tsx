@@ -65,11 +65,14 @@ export default function NotFound() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-slate-50">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-2 rounded-lg shadow-sm bg-gradient-to-br from-blue-500 to-blue-600">
-          <img src={logo} alt="Logo MicroStock" className="w-8 h-8" />
+          <img src={logo} alt="Nexus" className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text">
-          MicroStock
-        </h1>
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text">
+            Nexus
+          </h1>
+          <span className="text-xs italic text-gray-500">By RysthDesign</span>
+        </div>
       </div>
 
       <h2 className="mb-4 text-6xl font-bold text-slate-800">404</h2>

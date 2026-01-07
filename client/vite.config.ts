@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     host: true, // listen on 0.0.0.0 for Docker / Traefik
     port: 5173,
-    allowedHosts: ['blog.env.com.ec']
+    allowedHosts: ['nexus.rysthdesign.com']
   },
   preview: {
     host: true,

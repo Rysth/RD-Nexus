@@ -31,9 +31,9 @@ import ErrorBoundary from "../components/errors/ErrorBoundary";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <RootLayout />,
+    element: <AuthLayout />,
     errorElement: <ErrorBoundary />,
-    children: [{ index: true, element: <Home /> }],
+    children: [{ index: true, element: <AuthSignIn /> }],
   },
   {
     path: "auth",
@@ -41,8 +41,8 @@ export const router = createBrowserRouter([
     errorElement: <ErrorBoundary />,
     children: [
       { path: "signin", element: <AuthSignIn /> },
-      { path: "signup", element: <AuthSignUp /> },
-      { path: "confirm", element: <AuthConfirm /> },
+      // { path: "signup", element: <AuthSignUp /> },  // Registration disabled
+      // { path: "confirm", element: <AuthConfirm /> }, // Registration disabled
       { path: "verify-email", element: <AuthVerifyEmail /> },
       { path: "forgot-password", element: <AuthForgotPassword /> },
       { path: "reset-password", element: <AuthResetPassword /> },

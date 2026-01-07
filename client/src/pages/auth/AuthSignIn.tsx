@@ -509,22 +509,19 @@ export default function AuthSignIn() {
         </div>
       </form>
 
+      {/* Registration and social login hidden for production
       <div className="space-y-4">
-        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="h-px bg-slate-200 grow" />
           <span className="text-xs text-slate-400">O ingresa con</span>
           <div className="h-px bg-slate-200 grow" />
         </div>
-
-        {/* Social placeholder (Google only) */}
         <div className="grid grid-cols-1">
           <Button type="button" variant="outline" className="h-10">
             <i className="text-lg bx bxl-google" />
             <span>Continuar con Google</span>
           </Button>
         </div>
-
         <div className="flex flex-col gap-2 text-center">
           <div className="flex items-center justify-center gap-1 text-sm">
             <p className="text-neutral-500">¿No tienes una cuenta?</p>
@@ -545,6 +542,7 @@ export default function AuthSignIn() {
           </div>
         </div>
       </div>
+      */}
     </>
   );
 }
