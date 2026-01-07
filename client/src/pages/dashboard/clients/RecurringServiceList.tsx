@@ -100,6 +100,18 @@ export default function RecurringServiceList({
     fetchRecurringServicesByProject(projectId);
   };
 
+  const formatDateOnly = (dateString: string) => {
+    // Backend sends date-only strings like YYYY-MM-DD.
+    // `new Date('YYYY-MM-DD')` is parsed as UTC and can render the previous day
+    // in negative timezones. Parse it as a local date instead.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split("-").map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString("es-EC");
+    }
+
+    return new Date(dateString).toLocaleDateString("es-EC");
+  };
+
   // Stats
   const totalServices = recurringServices.length;
   const activeServices = recurringServices.filter(
@@ -247,9 +259,7 @@ export default function RecurringServiceList({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(service.next_billing_date).toLocaleDateString(
-                          "es-EC"
-                        )}
+                        {formatDateOnly(service.next_billing_date)}
                       </TableCell>
                       <TableCell>
                         <Badge
