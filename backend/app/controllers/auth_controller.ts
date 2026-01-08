@@ -10,6 +10,7 @@ import hash from '@adonisjs/core/services/hash'
 import SendOtpEmail from '#jobs/send_otp_email'
 import SendVerificationEmail from '#jobs/send_verification_email'
 import SendPasswordResetEmail from '#jobs/send_password_reset_email'
+import logger from '@adonisjs/core/services/logger'
 
 export default class AuthController {
   /**
@@ -72,17 +73,32 @@ export default class AuthController {
   async login({ request, response }: HttpContext) {
     const { email, password } = await request.validateUsing(loginValidator)
 
+    logger.info({ email }, '[LOGIN] Attempt for email')
+
     // Find user by email
     const user = await User.findBy('email', email)
     if (!user) {
+      logger.warn({ email }, '[LOGIN] User not found')
       return response.unauthorized({
         error: 'Credenciales incorrectas',
       })
     }
 
-    // Verify password
-    const isValid = await User.verifyCredentials(email, password)
-    if (!isValid) {
+    logger.info({ userId: user.id, email, passwordHash: user.password.substring(0, 20) + '...' }, '[LOGIN] User found, verifying credentials')
+
+    // Verify password using hash.verify directly (more reliable)
+    try {
+      const isValidDirect = await hash.verify(user.password, password)
+      logger.info({ userId: user.id, isValidDirect }, '[LOGIN] Direct hash.verify result')
+
+      if (!isValidDirect) {
+        logger.warn({ userId: user.id, email }, '[LOGIN] Password verification failed')
+        return response.unauthorized({
+          error: 'Credenciales incorrectas',
+        })
+      }
+    } catch (err) {
+      logger.error({ userId: user.id, error: err }, '[LOGIN] Error during password verification')
       return response.unauthorized({
         error: 'Credenciales incorrectas',
       })
@@ -90,6 +106,7 @@ export default class AuthController {
 
     // Check if account is verified
     if (user.status === 1) {
+      logger.warn({ userId: user.id }, '[LOGIN] Account not verified')
       return response.forbidden({
         error: 'Tu cuenta no está verificada. Revisa tu correo electrónico.',
       })
@@ -97,10 +114,13 @@ export default class AuthController {
 
     // Check if account is closed
     if (user.status === 3) {
+      logger.warn({ userId: user.id }, '[LOGIN] Account is closed')
       return response.forbidden({
         error: 'Esta cuenta ha sido desactivada.',
       })
     }
+
+    logger.info({ userId: user.id }, '[LOGIN] Credentials valid, generating OTP')
 
     // Generate OTP for two-factor authentication
     const otp = await OtpCode.generateForUser(user.id)
@@ -111,6 +131,8 @@ export default class AuthController {
       code: otp.code,
       fullName: user.fullName ?? undefined,
     })
+
+    logger.info({ userId: user.id, email }, '[LOGIN] OTP sent successfully')
 
     return response.ok({
       otp_required: true,

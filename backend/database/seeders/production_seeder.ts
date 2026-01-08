@@ -40,19 +40,24 @@ export default class ProductionSeeder extends BaseSeeder {
       })
       didSetAdminPassword = true
       console.log('  ✓ Admin user created')
+      console.log(`    Password hash starts with: ${admin.password.substring(0, 30)}...`)
     } else {
       const passwordLooksHashed = typeof admin.password === 'string' && admin.password.startsWith('$scrypt$')
+      console.log(`    Current password hash starts with: ${admin.password.substring(0, 30)}...`)
+      console.log(`    Password looks hashed: ${passwordLooksHashed}`)
 
       if (forcePasswordReset) {
         admin.merge({ password: adminPassword })
         await admin.save()
         didSetAdminPassword = true
         console.log('  ✓ Admin password force-reset')
+        console.log(`    New password hash starts with: ${admin.password.substring(0, 30)}...`)
       } else if (!passwordLooksHashed) {
         admin.merge({ password: adminPassword })
         await admin.save()
         didSetAdminPassword = true
         console.log('  ✓ Admin password repaired (was not hashed)')
+        console.log(`    New password hash starts with: ${admin.password.substring(0, 30)}...`)
       } else {
         console.log('  ✓ Admin user already exists')
       }
