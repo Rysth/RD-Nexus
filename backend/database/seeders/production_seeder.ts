@@ -35,7 +35,13 @@ export default class ProductionSeeder extends BaseSeeder {
       })
       console.log('  ✓ Admin user created')
     } else {
-      console.log('  ✓ Admin user already exists')
+      if (!admin.password.startsWith('$scrypt$')) {
+        admin.merge({ password: 'NexusAdmin2026!' })
+        await admin.save()
+        console.log('  ✓ Admin password reset and hashed')
+      } else {
+        console.log('  ✓ Admin user already exists')
+      }
     }
 
     // Ensure admin has admin role
