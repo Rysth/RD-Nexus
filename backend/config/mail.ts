@@ -34,10 +34,6 @@ const mailConfig = defineConfig({
       host: smtpHost,
       port: smtpPort,
       secure: smtpSecure,
-      // Make failures surface fast (helps production debugging)
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 20_000,
       ...(smtpUser && smtpPass
         ? {
             auth: {
