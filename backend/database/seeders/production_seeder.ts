@@ -22,23 +22,37 @@ export default class ProductionSeeder extends BaseSeeder {
 
     // 2. Create or update admin user
     const adminEmail = 'johnpalacios.t@gmail.com'
+    const adminPassword = (process.env.ADMIN_PASSWORD || 'NexusAdmin2026!').trim() // Change this after first login!
+    const forcePasswordReset = ['1', 'true', 'yes', 'on'].includes(
+      (process.env.FORCE_ADMIN_PASSWORD_RESET || '').toLowerCase()
+    )
+    let didSetAdminPassword = false
     console.log(`  → Setting up admin user: ${adminEmail}...`)
 
     let admin = await User.findBy('email', adminEmail)
     if (!admin) {
       admin = await User.create({
         email: adminEmail,
-        password: 'NexusAdmin2026!', // Change this after first login!
+        password: adminPassword,
         fullName: 'John Palacios',
         username: 'johnpalacios',
         status: 2, // verified
       })
+      didSetAdminPassword = true
       console.log('  ✓ Admin user created')
     } else {
-      if (!admin.password.startsWith('$scrypt$')) {
-        admin.merge({ password: 'NexusAdmin2026!' })
+      const passwordLooksHashed = typeof admin.password === 'string' && admin.password.startsWith('$scrypt$')
+
+      if (forcePasswordReset) {
+        admin.merge({ password: adminPassword })
         await admin.save()
-        console.log('  ✓ Admin password reset and hashed')
+        didSetAdminPassword = true
+        console.log('  ✓ Admin password force-reset')
+      } else if (!passwordLooksHashed) {
+        admin.merge({ password: adminPassword })
+        await admin.save()
+        didSetAdminPassword = true
+        console.log('  ✓ Admin password repaired (was not hashed)')
       } else {
         console.log('  ✓ Admin user already exists')
       }
@@ -74,8 +88,13 @@ export default class ProductionSeeder extends BaseSeeder {
     console.log('  🎉 Production setup complete!')
     console.log('═══════════════════════════════════════════════════')
     console.log(`  Admin Email: ${adminEmail}`)
-    console.log('  Admin Password: NexusAdmin2026!')
-    console.log('  ⚠️  IMPORTANT: Change your password after first login!')
+    if (didSetAdminPassword) {
+      console.log(`  Admin Password: ${adminPassword}`)
+      console.log('  ⚠️  IMPORTANT: Change your password after first login!')
+    } else {
+      console.log('  Admin Password: (unchanged)')
+      console.log('  ℹ️  To reset: set FORCE_ADMIN_PASSWORD_RESET=true and ADMIN_PASSWORD')
+    }
     console.log('═══════════════════════════════════════════════════')
   }
 }
