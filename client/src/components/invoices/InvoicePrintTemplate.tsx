@@ -149,9 +149,9 @@ const InvoicePrintTemplate = forwardRef<
               </span>
             </div>
             <div className="quote-info-item">
-              <span className="quote-info-label">RUC/CI:</span>
+              <span className="quote-info-label">Negocio:</span>
               <span className="quote-info-value">
-                {invoice.client?.identification || "N/A"}
+                {invoice.project?.name || invoice.client?.name || "N/A"}
               </span>
             </div>
           </div>
