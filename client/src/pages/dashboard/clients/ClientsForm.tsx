@@ -17,7 +17,7 @@ import {
 interface ClientFormValues {
   name: string;
   identification_type: string;
-  identification: string;
+  identification?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -69,11 +69,12 @@ export default function ClientsForm({
   const onSubmit = async (data: ClientFormValues) => {
     setIsSubmitting(true);
     try {
+      const identification = data.identification?.trim() || "";
       if (isEditing && client) {
         await updateClient(client.id, {
           name: data.name,
           identification_type: data.identification_type,
-          identification: data.identification,
+          identification: identification ? identification : null,
           email: data.email || null,
           phone: data.phone || null,
           address: data.address || null,
@@ -84,7 +85,7 @@ export default function ClientsForm({
         await createClient({
           name: data.name,
           identification_type: data.identification_type,
-          identification: data.identification,
+          ...(identification ? { identification } : {}),
           email: data.email || undefined,
           phone: data.phone || undefined,
           address: data.address || undefined,
@@ -143,13 +144,16 @@ export default function ClientsForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="identification">Identificación *</Label>
+          <Label htmlFor="identification">Identificación</Label>
           <Input
             id="identification"
             placeholder="1234567890"
             {...register("identification", {
-              required: "La identificación es obligatoria",
-              minLength: { value: 5, message: "Mínimo 5 caracteres" },
+              validate: (value) => {
+                const trimmed = value?.trim() || "";
+                if (!trimmed) return true;
+                return trimmed.length >= 5 || "Mínimo 5 caracteres";
+              },
             })}
           />
           {errors.identification && (

@@ -7,7 +7,7 @@ export interface Client {
   name: string;
   identification_type: string;
   identification_type_label: string;
-  identification: string;
+  identification: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -76,7 +76,7 @@ interface RecurringServiceFilters {
 interface CreateClientData {
   name: string;
   identification_type: string;
-  identification: string;
+  identification?: string;
   email?: string;
   phone?: string;
   address?: string;

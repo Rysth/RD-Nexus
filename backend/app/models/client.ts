@@ -20,7 +20,7 @@ export default class Client extends BaseModel {
   declare identificationType: string
 
   @column()
-  declare identification: string
+  declare identification: string | null
 
   @column()
   declare email: string | null

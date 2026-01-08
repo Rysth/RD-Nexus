@@ -82,7 +82,7 @@ export default function ClientDelete({
                   </div>
                   <div>
                     <span className="font-semibold">Identificación:</span>{" "}
-                    {client.identification}
+                    {client.identification || "—"}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Tipo:</span>

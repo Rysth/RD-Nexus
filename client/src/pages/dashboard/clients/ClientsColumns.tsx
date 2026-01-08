@@ -47,7 +47,7 @@ export const createClientsColumns = ({
     header: "Cédula",
     cell: ({ row }) => (
       <span className="text-sm text-muted-foreground">
-        {row.original.identification}
+        {row.original.identification || "—"}
       </span>
     ),
   },

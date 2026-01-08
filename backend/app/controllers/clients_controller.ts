@@ -15,7 +15,7 @@ const createClientValidator = vine.compile(
   vine.object({
     name: vine.string().trim().minLength(2).maxLength(200),
     identification_type: vine.string().trim().in(['04', '05', '06']),
-    identification: vine.string().trim().minLength(5).maxLength(20),
+    identification: vine.string().trim().minLength(5).maxLength(20).nullable().optional(),
     email: vine.string().email().optional(),
     phone: vine.string().trim().maxLength(20).optional(),
     address: vine.string().trim().maxLength(500).optional(),
@@ -27,7 +27,7 @@ const updateClientValidator = vine.compile(
   vine.object({
     name: vine.string().trim().minLength(2).maxLength(200).optional(),
     identification_type: vine.string().trim().in(['04', '05', '06']).optional(),
-    identification: vine.string().trim().minLength(5).maxLength(20).optional(),
+    identification: vine.string().trim().minLength(5).maxLength(20).nullable().optional(),
     email: vine.string().email().nullable().optional(),
     phone: vine.string().trim().maxLength(20).nullable().optional(),
     address: vine.string().trim().maxLength(500).nullable().optional(),
@@ -138,18 +138,22 @@ export default class ClientsController {
   async store({ request, response }: HttpContext) {
     const data = await request.validateUsing(createClientValidator)
 
+    const identification = data.identification?.trim() || null
+
     // Check if identification already exists
-    const existing = await Client.findBy('identification', data.identification)
-    if (existing) {
-      return response.conflict({
-        error: 'Ya existe un cliente con esta identificación',
-      })
+    if (identification) {
+      const existing = await Client.findBy('identification', identification)
+      if (existing) {
+        return response.conflict({
+          error: 'Ya existe un cliente con esta identificación',
+        })
+      }
     }
 
     const client = await Client.create({
       name: data.name,
       identificationType: data.identification_type,
-      identification: data.identification,
+      identification,
       email: data.email || null,
       phone: data.phone || null,
       address: data.address || null,
