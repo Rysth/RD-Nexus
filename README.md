@@ -204,13 +204,20 @@ RD-Nexus/
 
 ### Frontend (React)
 - Dashboard: vista rápida de “Pagos pendientes este mes”.
-- Detalle de Proyecto: tabs para “Servicios Recurrentes”, “Historial de Cotizaciones”, “Facturas”.
-- En cotizaciones: botón “Convertir a Factura” que consume la API.
+- Detalle de Proyecto: tabs para “Servicios Recurrentes”, “Historial de Cotizaciones”, “Cuentas de cobro”.
+- En cotizaciones: botón “Convertir a Cuenta de cobro” que consume la API.
 
 ### Facturación Electrónica (Ecuador) — fase futura
 - Mantener `identification_type` en clientes (RUC=04, Cédula=05, Pasaporte=06).
 - Reservar campos `access_key` y `xml_content` en facturas.
 - Tabla `taxes` para evolucionar la lógica tributaria si cambia el régimen.
+
+**Camino sugerido (pruebas → producción)**
+- Firma electrónica (archivo de certificado + clave). Sin esto no se puede firmar el XML.
+- Proceso de habilitación en SRI para comprobantes electrónicos (y acceso a ambiente de pruebas).
+- Implementar: generación de XML (según esquema SRI) → firma (XAdES-BES) → envío a Recepción (pruebas) → consulta de Autorización.
+- Persistir: `access_key`, `xml_content`, `authorization_date`, `sri_status`.
+- Cuando esté estable en pruebas, repetir el flujo en producción.
 
 ## 🔧 Comandos Útiles
 

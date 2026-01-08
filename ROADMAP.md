@@ -79,8 +79,8 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 - API
   - [x] Servicio: quote aprobada → invoice + items copiados
 - Frontend
-  - [x] Tab "Facturas": listar/ver estado
-  - [x] En detalle de cotización: botón "Convertir a Factura"
+  - [x] Tab "Cuentas de cobro": listar/ver estado
+  - [x] En detalle de cotización: botón "Convertir a Cuenta de cobro"
 - Done
   - [x] Quote aprobada se convierte en invoice en 1 clic conservando items/total
 
@@ -106,5 +106,12 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 
 ## Backlog (post-M5)
 - [ ] Facturación electrónica SRI (fase 2)
+  - [ ] Adquirir/configurar firma electrónica (certificado + clave)
+  - [ ] Habilitación en SRI para comprobantes electrónicos + acceso a ambiente de pruebas
+  - [ ] Generar XML según esquema SRI (factura, nota de crédito, etc.)
+  - [ ] Firmar XML (XAdES-BES)
+  - [ ] Enviar a Recepción (pruebas) y consultar Autorización
+  - [ ] Guardar `access_key`, `xml_content`, `authorization_date`, `sri_status`
+  - [ ] Repetir flujo en producción al estar estable
 - [ ] Reportes (ingresos por mes, MRR/ARR personal)
 - [ ] Exportaciones (CSV/PDF)

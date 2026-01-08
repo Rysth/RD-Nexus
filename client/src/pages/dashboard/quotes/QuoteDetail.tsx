@@ -71,10 +71,10 @@ const statusColors: Record<string, string> = {
 };
 
 const statusIcons: Record<string, ReactNode> = {
-  draft: <FileText className="h-4 w-4" />,
-  sent: <Send className="h-4 w-4" />,
-  approved: <CheckCircle className="h-4 w-4" />,
-  rejected: <XCircle className="h-4 w-4" />,
+  draft: <FileText className="w-4 h-4" />,
+  sent: <Send className="w-4 h-4" />,
+  approved: <CheckCircle className="w-4 h-4" />,
+  rejected: <XCircle className="w-4 h-4" />,
 };
 
 export default function QuoteDetail() {
@@ -177,14 +177,14 @@ export default function QuoteDetail() {
   if (quotesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-primary"></div>
       </div>
     );
   }
 
   if (!currentQuote) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-muted-foreground">Cotización no encontrada</p>
         <Button variant="link" onClick={() => navigate("/dashboard/quotes")}>
           Volver a cotizaciones
@@ -203,7 +203,7 @@ export default function QuoteDetail() {
             size="icon"
             onClick={() => navigate("/dashboard/quotes")}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
@@ -218,7 +218,7 @@ export default function QuoteDetail() {
               </Badge>
               {currentQuote.is_expired && (
                 <Badge variant="destructive">
-                  <AlertCircle className="mr-1 h-3 w-3" />
+                  <AlertCircle className="w-3 h-3 mr-1" />
                   Expirada
                 </Badge>
               )}
@@ -265,22 +265,22 @@ export default function QuoteDetail() {
             }}
             disabled={!currentQuote.client?.phone}
           >
-            <MessageCircle className="mr-2 h-4 w-4" />
+            <MessageCircle className="w-4 h-4 mr-2" />
             WhatsApp
           </Button>
           <Button variant="outline" onClick={() => setPreviewOpen(true)}>
-            <Eye className="mr-2 h-4 w-4" />
+            <Eye className="w-4 h-4 mr-2" />
             Vista Previa
           </Button>
           <Button onClick={() => handlePrint()}>
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="w-4 h-4 mr-2" />
             Descargar PDF
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -290,13 +290,13 @@ export default function QuoteDetail() {
                     navigate(`/dashboard/quotes/${currentQuote.id}/edit`)
                   }
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className="w-4 h-4 mr-2" />
                   Editar
                 </DropdownMenuItem>
               )}
               {!currentQuote.is_expired && (
                 <DropdownMenuItem onClick={handleDuplicate}>
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy className="w-4 h-4 mr-2" />
                   Duplicar
                 </DropdownMenuItem>
               )}
@@ -309,7 +309,7 @@ export default function QuoteDetail() {
                     <DropdownMenuItem
                       onClick={() => handleStatusUpdate("sent")}
                     >
-                      <Send className="mr-2 h-4 w-4" />
+                      <Send className="w-4 h-4 mr-2" />
                       Marcar como Enviada
                     </DropdownMenuItem>
                   )}
@@ -318,13 +318,13 @@ export default function QuoteDetail() {
                       <DropdownMenuItem
                         onClick={() => handleStatusUpdate("approved")}
                       >
-                        <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
                         Marcar como Aprobada
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleStatusUpdate("rejected")}
                       >
-                        <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                        <XCircle className="w-4 h-4 mr-2 text-red-500" />
                         Marcar como Rechazada
                       </DropdownMenuItem>
                     </>
@@ -334,7 +334,7 @@ export default function QuoteDetail() {
                     <DropdownMenuItem
                       onClick={() => handleStatusUpdate("draft")}
                     >
-                      <FileText className="mr-2 h-4 w-4" />
+                      <FileText className="w-4 h-4 mr-2" />
                       Regresar a Borrador
                     </DropdownMenuItem>
                   )}
@@ -349,8 +349,8 @@ export default function QuoteDetail() {
                     onClick={() => setConvertDialogOpen(true)}
                     className="text-green-600"
                   >
-                    <Receipt className="mr-2 h-4 w-4" />
-                    Convertir a Factura
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Convertir a Cuenta de Cobro
                   </DropdownMenuItem>
                 </>
               )}
@@ -362,7 +362,7 @@ export default function QuoteDetail() {
                     onClick={() => setDeleteDialogOpen(true)}
                     className="text-red-600"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="w-4 h-4 mr-2" />
                     Eliminar
                   </DropdownMenuItem>
                 </>
@@ -377,8 +377,8 @@ export default function QuoteDetail() {
         {/* Client Info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <User className="h-4 w-4" />
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <User className="w-4 h-4" />
               Cliente
             </CardTitle>
           </CardHeader>
@@ -396,7 +396,7 @@ export default function QuoteDetail() {
             )}
             <Button
               variant="link"
-              className="p-0 h-auto mt-2"
+              className="h-auto p-0 mt-2"
               onClick={() =>
                 navigate(`/dashboard/clients/${currentQuote.client_id}`)
               }
@@ -410,8 +410,8 @@ export default function QuoteDetail() {
         {currentQuote.project && (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Building2 className="w-4 h-4" />
                 Proyecto
               </CardTitle>
             </CardHeader>
@@ -422,7 +422,7 @@ export default function QuoteDetail() {
               </Badge>
               <Button
                 variant="link"
-                className="p-0 h-auto mt-2 block"
+                className="block h-auto p-0 mt-2"
                 onClick={() =>
                   navigate(`/dashboard/projects/${currentQuote.project_id}`)
                 }
@@ -436,8 +436,8 @@ export default function QuoteDetail() {
         {/* Dates */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <Calendar className="w-4 h-4" />
               Fechas
             </CardTitle>
           </CardHeader>
@@ -489,7 +489,7 @@ export default function QuoteDetail() {
                   <TableCell className="text-right">
                     {formatCurrency(item.unit_price)}
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="font-medium text-right">
                     {formatCurrency(item.subtotal)}
                   </TableCell>
                 </TableRow>
@@ -499,7 +499,7 @@ export default function QuoteDetail() {
 
           {/* Totals */}
           <div className="flex justify-end mt-6">
-            <div className="w-72 space-y-2">
+            <div className="space-y-2 w-72">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal:</span>
                 <span className="font-medium">
@@ -564,17 +564,17 @@ export default function QuoteDetail() {
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0 bg-gray-100/95 backdrop-blur-sm">
-          <DialogHeader className="p-4 border-b bg-white">
+          <DialogHeader className="p-4 bg-white border-b">
             <DialogTitle>Vista Previa de Cotización</DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 flex justify-center">
+          <div className="flex justify-center flex-1 p-6 overflow-y-auto">
             <div className="bg-white shadow-2xl rounded-sm max-w-[210mm] w-full min-h-[297mm] mx-auto overflow-hidden">
               <QuotePrintTemplate quote={currentQuote} business={business} />
             </div>
           </div>
 
-          <div className="p-4 border-t bg-white flex justify-end gap-2">
+          <div className="flex justify-end gap-2 p-4 bg-white border-t">
             <Button variant="outline" onClick={() => setPreviewOpen(false)}>
               Cerrar
             </Button>
@@ -584,7 +584,7 @@ export default function QuoteDetail() {
                 handlePrint();
               }}
             >
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="w-4 h-4 mr-2" />
               Descargar PDF
             </Button>
           </div>
@@ -617,12 +617,12 @@ export default function QuoteDetail() {
       <AlertDialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Convertir a factura?</AlertDialogTitle>
+            <AlertDialogTitle>¿Convertir a cuenta de cobro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se creará una factura a partir de la cotización "
-              {currentQuote.quote_number}". La factura incluirá todos los
-              elementos y montos de esta cotización. El vencimiento será de 30
-              días a partir de hoy.
+              Se creará una cuenta de cobro a partir de la cotización "
+              {currentQuote.quote_number}". La cuenta de cobro incluirá todos
+              los elementos y montos de esta cotización. El vencimiento será de
+              30 días a partir de hoy.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -632,7 +632,7 @@ export default function QuoteDetail() {
               disabled={invoicesLoading}
               className="bg-green-600 hover:bg-green-700"
             >
-              {invoicesLoading ? "Convirtiendo..." : "Crear Factura"}
+              {invoicesLoading ? "Convirtiendo..." : "Crear Cuenta de Cobro"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

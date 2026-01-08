@@ -112,7 +112,7 @@ export default function AppSidebar({
       },
       {
         to: "/dashboard/invoices",
-        label: "Facturas",
+        label: "Cuentas de cobro",
         icon: FileText,
         show: canManageUsers,
       },

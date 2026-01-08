@@ -116,7 +116,6 @@ export default function Dashboard() {
   const revenueChartData = stats.monthly_revenue.map((item) => ({
     date: item.month,
     Ingresos: item.revenue,
-    Facturas: item.invoices * 100, // Scale for visibility
   }));
 
   // Invoice distribution data
@@ -192,7 +191,7 @@ export default function Dashboard() {
                 }
               : undefined
           }
-          description={`${stats.invoices.pending_count} facturas pendientes`}
+          description={`${stats.invoices.pending_count} cuentas de cobro pendientes`}
         />
 
         <StatsCard
@@ -202,7 +201,7 @@ export default function Dashboard() {
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100 dark:bg-purple-900/50"
           variant="colored"
-          description={`${stats.invoices.paid_count} facturas pagadas`}
+          description={`${stats.invoices.paid_count} cuentas de cobro pagadas`}
         />
       </div>
 
@@ -238,7 +237,7 @@ export default function Dashboard() {
         {/* Invoice Distribution */}
         <Card className="shadow-sm bg-gradient-to-t from-primary/5 to-card">
           <CardHeader>
-            <CardTitle>Estado de Facturas</CardTitle>
+            <CardTitle>Estado de Cuentas de Cobro</CardTitle>
             <CardDescription>Distribución por estado</CardDescription>
           </CardHeader>
           <CardContent>
@@ -248,11 +247,11 @@ export default function Dashboard() {
                 category="name"
                 value="value"
                 colors={invoiceDistribution.map((d) => d.color)}
-                valueFormatter={(value: number) => `${value} facturas`}
+                valueFormatter={(value: number) => `${value} cuentas de cobro`}
               />
             ) : (
               <div className="flex items-center justify-center h-48 text-muted-foreground">
-                No hay facturas aún
+                No hay cuentas de cobro aún
               </div>
             )}
           </CardContent>
@@ -279,8 +278,10 @@ export default function Dashboard() {
         <Card className="shadow-sm bg-gradient-to-t from-primary/5 to-card">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Facturas Recientes</CardTitle>
-              <CardDescription>Últimas facturas emitidas</CardDescription>
+              <CardTitle>Cuentas de Cobro Recientes</CardTitle>
+              <CardDescription>
+                Últimas cuentas de cobro emitidas
+              </CardDescription>
             </div>
             <Button
               variant="ghost"
@@ -320,7 +321,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
-                No hay facturas recientes
+                No hay cuentas de cobro recientes
               </div>
             )}
           </CardContent>

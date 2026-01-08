@@ -63,7 +63,7 @@ const InvoicePrintTemplate = forwardRef<
           </div>
         </div>
         <div className="quote-header-right">
-          <h1 className="quote-title">FACTURA</h1>
+          <h1 className="quote-title">CUENTA DE COBRO</h1>
           <p className="quote-subtitle">{invoice.invoice_number}</p>
         </div>
       </div>
@@ -108,7 +108,7 @@ const InvoicePrintTemplate = forwardRef<
                 </span>
               </div>
               <div className="quote-info-item">
-                <span className="quote-info-label">Factura #:</span>
+                <span className="quote-info-label">Documento #:</span>
                 <span className="quote-info-value">
                   {invoice.invoice_number}
                 </span>
@@ -138,7 +138,7 @@ const InvoicePrintTemplate = forwardRef<
       {/* Client Section */}
       <div className="quote-section">
         <div className="quote-section-header">
-          <span>Facturar A</span>
+          <span>Cobrar A</span>
         </div>
         <div className="quote-client-info">
           <div className="quote-client-row">
@@ -173,7 +173,7 @@ const InvoicePrintTemplate = forwardRef<
       {/* Items Table */}
       <div className="quote-section">
         <div className="quote-section-header">
-          <span>Detalle de Factura</span>
+          <span>Detalle de Cuenta de Cobro</span>
         </div>
         <table className="quote-table">
           <thead>
