@@ -3,7 +3,12 @@ import { defineConfig, transports } from '@adonisjs/mail'
 
 const smtpHost = env.get('SMTP_HOST', 'mailpit')
 const smtpPort = Number(env.get('SMTP_PORT', '1025'))
-const smtpSecure = env.get('SMTP_SECURE', 'false') === 'true'
+// If SMTP_SECURE is not explicitly set, infer it from the port.
+// 465 = implicit TLS, 587/25 = plain + STARTTLS.
+const smtpSecureEnv = env.get('SMTP_SECURE', '').trim().toLowerCase()
+const smtpSecure = smtpSecureEnv.length
+  ? ['1', 'true', 'yes', 'on'].includes(smtpSecureEnv)
+  : smtpPort === 465
 const smtpUser = env.get('SMTP_USERNAME')
 const smtpPass = env.get('SMTP_PASSWORD')
 
@@ -29,6 +34,10 @@ const mailConfig = defineConfig({
       host: smtpHost,
       port: smtpPort,
       secure: smtpSecure,
+      // Make failures surface fast (helps production debugging)
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
       ...(smtpUser && smtpPass
         ? {
             auth: {
