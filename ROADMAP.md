@@ -79,8 +79,8 @@ Roadmap para avanzar **milestone por milestone** en Nexus (uso 100% personal), p
 - API
   - [x] Servicio: quote aprobada → invoice + items copiados
 - Frontend
-  - [x] Tab "Cuentas de cobro": listar/ver estado
-  - [x] En detalle de cotización: botón "Convertir a Cuenta de cobro"
+  - [x] Tab "Comprobantes": listar/ver estado
+  - [x] En detalle de cotización: botón "Convertir a Comprobante"
 - Done
   - [x] Quote aprobada se convierte en invoice en 1 clic conservando items/total
 

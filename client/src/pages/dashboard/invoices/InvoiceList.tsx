@@ -319,7 +319,7 @@ export default function InvoiceList() {
 
       <Button onClick={() => navigate("/dashboard/invoices/new")}>
         <Plus className="w-4 h-4 mr-2" />
-        Nueva Cuenta de Cobro
+        Nuevo Comprobante
       </Button>
 
       {/* Table */}
@@ -328,23 +328,23 @@ export default function InvoiceList() {
           {invoicesLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-gray-300 rounded-full animate-spin border-t-gray-600" />
-              <span className="ml-2">Cargando cuentas de cobro...</span>
+              <span className="ml-2">Cargando comprobantes...</span>
             </div>
           ) : invoices.length === 0 ? (
             <div className="py-8 text-center">
               <FileText className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="mt-2 text-sm font-semibold">
-                No hay cuentas de cobro
+                No hay comprobantes
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Crea tu primera cuenta de cobro o convierte una cotización
+                Crea tu primer comprobante o convierte una cotización
               </p>
               <Button
                 className="mt-4"
                 onClick={() => navigate("/dashboard/invoices/new")}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Nueva Cuenta de Cobro
+                Nuevo Comprobante
               </Button>
             </div>
           ) : (
@@ -501,10 +501,10 @@ export default function InvoiceList() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar cuenta de cobro?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar comprobante?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente la
-              cuenta de cobro "{invoiceToAction?.invoice_number}".
+              Esta acción no se puede deshacer. Se eliminará permanentemente el
+              comprobante "{invoiceToAction?.invoice_number}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -523,11 +523,11 @@ export default function InvoiceList() {
       <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Anular cuenta de cobro?</AlertDialogTitle>
+            <AlertDialogTitle>¿Anular comprobante?</AlertDialogTitle>
             <AlertDialogDescription>
-              La cuenta de cobro "{invoiceToAction?.invoice_number}" será
-              marcada como anulada. Esta acción no elimina la cuenta de cobro,
-              solo cambia su estado.
+              El comprobante "{invoiceToAction?.invoice_number}" será marcado
+              como anulado. Esta acción no elimina el comprobante, solo cambia
+              su estado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

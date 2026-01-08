@@ -191,7 +191,7 @@ export default function Dashboard() {
                 }
               : undefined
           }
-          description={`${stats.invoices.pending_count} cuentas de cobro pendientes`}
+          description={`${stats.invoices.pending_count} comprobantes pendientes`}
         />
 
         <StatsCard
@@ -201,7 +201,7 @@ export default function Dashboard() {
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100 dark:bg-purple-900/50"
           variant="colored"
-          description={`${stats.invoices.paid_count} cuentas de cobro pagadas`}
+          description={`${stats.invoices.paid_count} comprobantes pagados`}
         />
       </div>
 
@@ -237,7 +237,7 @@ export default function Dashboard() {
         {/* Invoice Distribution */}
         <Card className="shadow-sm bg-gradient-to-t from-primary/5 to-card">
           <CardHeader>
-            <CardTitle>Estado de Cuentas de Cobro</CardTitle>
+            <CardTitle>Estado de Comprobantes</CardTitle>
             <CardDescription>Distribución por estado</CardDescription>
           </CardHeader>
           <CardContent>
@@ -247,11 +247,11 @@ export default function Dashboard() {
                 category="name"
                 value="value"
                 colors={invoiceDistribution.map((d) => d.color)}
-                valueFormatter={(value: number) => `${value} cuentas de cobro`}
+                valueFormatter={(value: number) => `${value} comprobantes`}
               />
             ) : (
               <div className="flex items-center justify-center h-48 text-muted-foreground">
-                No hay cuentas de cobro aún
+                No hay comprobantes aún
               </div>
             )}
           </CardContent>
@@ -278,10 +278,8 @@ export default function Dashboard() {
         <Card className="shadow-sm bg-gradient-to-t from-primary/5 to-card">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Cuentas de Cobro Recientes</CardTitle>
-              <CardDescription>
-                Últimas cuentas de cobro emitidas
-              </CardDescription>
+              <CardTitle>Comprobantes Recientes</CardTitle>
+              <CardDescription>Últimos comprobantes emitidos</CardDescription>
             </div>
             <Button
               variant="ghost"
@@ -321,7 +319,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
-                No hay cuentas de cobro recientes
+                No hay comprobantes recientes
               </div>
             )}
           </CardContent>

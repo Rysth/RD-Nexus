@@ -54,13 +54,13 @@ export default function DashboardLayout() {
     } else if (path.startsWith("/dashboard/quotes/")) {
       return { section: "Cotizaciones", page: "Detalle" };
     } else if (path === "/dashboard/invoices") {
-      return { section: "Dashboard", page: "Cuentas de cobro" };
+      return { section: "Dashboard", page: "Comprobantes" };
     } else if (path === "/dashboard/invoices/new") {
-      return { section: "Cuentas de cobro", page: "Nueva" };
+      return { section: "Comprobantes", page: "Nuevo" };
     } else if (path.match(/\/dashboard\/invoices\/\d+\/edit/)) {
-      return { section: "Cuentas de cobro", page: "Editar" };
+      return { section: "Comprobantes", page: "Editar" };
     } else if (path.startsWith("/dashboard/invoices/")) {
-      return { section: "Cuentas de cobro", page: "Detalle" };
+      return { section: "Comprobantes", page: "Detalle" };
     }
     return { section: "Dashboard", page: "Panel de Control" };
   };

@@ -63,8 +63,18 @@ const InvoicePrintTemplate = forwardRef<
           </div>
         </div>
         <div className="quote-header-right">
-          <h1 className="quote-title">CUENTA DE COBRO</h1>
+          <h1 className="quote-title">COMPROBANTE DE SERVICIO</h1>
           <p className="quote-subtitle">{invoice.invoice_number}</p>
+          <p
+            style={{
+              fontSize: "8px",
+              color: "#6b7280",
+              marginTop: "4px",
+              fontStyle: "italic",
+            }}
+          >
+            Documento informativo — No válido como comprobante tributario
+          </p>
         </div>
       </div>
 
@@ -173,7 +183,7 @@ const InvoicePrintTemplate = forwardRef<
       {/* Items Table */}
       <div className="quote-section">
         <div className="quote-section-header">
-          <span>Detalle de Cuenta de Cobro</span>
+          <span>Detalle del Comprobante</span>
         </div>
         <table className="quote-table">
           <thead>

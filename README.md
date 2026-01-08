@@ -204,8 +204,8 @@ RD-Nexus/
 
 ### Frontend (React)
 - Dashboard: vista rápida de “Pagos pendientes este mes”.
-- Detalle de Proyecto: tabs para “Servicios Recurrentes”, “Historial de Cotizaciones”, “Cuentas de cobro”.
-- En cotizaciones: botón “Convertir a Cuenta de cobro” que consume la API.
+- Detalle de Proyecto: tabs para "Servicios Recurrentes", "Historial de Cotizaciones", "Comprobantes de Servicio".
+- En cotizaciones: botón "Convertir a Comprobante" que consume la API.
 
 ### Facturación Electrónica (Ecuador) — fase futura
 - Mantener `identification_type` en clientes (RUC=04, Cédula=05, Pasaporte=06).

@@ -254,12 +254,12 @@ export default function InvoiceForm() {
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
-            {isEdit ? "Editar Cuenta de Cobro" : "Nueva Cuenta de Cobro"}
+            {isEdit ? "Editar Comprobante" : "Nuevo Comprobante de Servicio"}
           </h2>
           <p className="text-muted-foreground">
             {isEdit
-              ? "Modifica los datos de la cuenta de cobro"
-              : "Crea una nueva cuenta de cobro manual"}
+              ? "Modifica los datos del comprobante"
+              : "Crea un nuevo comprobante de servicio"}
           </p>
         </div>
       </div>
@@ -429,7 +429,7 @@ export default function InvoiceForm() {
           {/* Items */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Elementos de la Cuenta de Cobro</CardTitle>
+              <CardTitle>Elementos del Comprobante</CardTitle>
               <Button
                 type="button"
                 variant="outline"
@@ -593,7 +593,7 @@ export default function InvoiceForm() {
               {invoicesLoading && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              {isEdit ? "Guardar Cambios" : "Crear Cuenta de Cobro"}
+              {isEdit ? "Guardar Cambios" : "Crear Comprobante"}
             </Button>
           </div>
         </form>

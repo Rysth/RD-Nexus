@@ -144,7 +144,7 @@ export default function InvoiceDetail() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: currentInvoice?.invoice_number || "Cuenta de cobro",
+    documentTitle: currentInvoice?.invoice_number || "Comprobante",
   });
 
   const handleDelete = async () => {
@@ -202,9 +202,9 @@ export default function InvoiceDetail() {
   if (!currentInvoice) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Cuenta de cobro no encontrada</p>
+        <p className="text-muted-foreground">Comprobante no encontrado</p>
         <Button variant="link" onClick={() => navigate("/dashboard/invoices")}>
-          Volver a cuentas de cobro
+          Volver a comprobantes
         </Button>
       </div>
     );
@@ -296,7 +296,7 @@ export default function InvoiceDetail() {
                     ? ` ${currentInvoice.client.name}`
                     : ""
                 }, ` +
-                `te comparto la cuenta de cobro ${currentInvoice.invoice_number}.\n` +
+                `te comparto el comprobante de servicio ${currentInvoice.invoice_number}.\n` +
                 `Total: ${formatCurrency(currentInvoice.total)}\n` +
                 `Vence: ${formattedDueDate}` +
                 businessName;
@@ -346,7 +346,7 @@ export default function InvoiceDetail() {
                       className="text-orange-600"
                     >
                       <XCircle className="mr-2 h-4 w-4" />
-                      Anular Cuenta de Cobro
+                      Anular Comprobante
                     </DropdownMenuItem>
                   </>
                 )}
@@ -523,7 +523,7 @@ export default function InvoiceDetail() {
       {/* Items Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Elementos de la Cuenta de Cobro</CardTitle>
+          <CardTitle>Elementos del Comprobante</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -605,7 +605,7 @@ export default function InvoiceDetail() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0 bg-gray-100/95 backdrop-blur-sm">
           <DialogHeader className="p-4 border-b bg-white">
-            <DialogTitle>Vista Previa de Cuenta de Cobro</DialogTitle>
+            <DialogTitle>Vista Previa del Comprobante</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 flex justify-center">
@@ -693,10 +693,10 @@ export default function InvoiceDetail() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar cuenta de cobro?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar comprobante?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente la
-              cuenta de cobro "{currentInvoice.invoice_number}".
+              Esta acción no se puede deshacer. Se eliminará permanentemente el
+              comprobante "{currentInvoice.invoice_number}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -715,11 +715,11 @@ export default function InvoiceDetail() {
       <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Anular cuenta de cobro?</AlertDialogTitle>
+            <AlertDialogTitle>¿Anular comprobante?</AlertDialogTitle>
             <AlertDialogDescription>
-              La cuenta de cobro "{currentInvoice.invoice_number}" será marcada
-              como anulada. Esta acción no elimina la cuenta de cobro, solo
-              cambia su estado.
+              El comprobante "{currentInvoice.invoice_number}" será marcado como
+              anulado. Esta acción no elimina el comprobante, solo cambia su
+              estado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

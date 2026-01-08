@@ -350,7 +350,7 @@ export default function QuoteDetail() {
                     className="text-green-600"
                   >
                     <Receipt className="w-4 h-4 mr-2" />
-                    Convertir a Cuenta de Cobro
+                    Convertir a Comprobante
                   </DropdownMenuItem>
                 </>
               )}
@@ -617,12 +617,12 @@ export default function QuoteDetail() {
       <AlertDialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Convertir a cuenta de cobro?</AlertDialogTitle>
+            <AlertDialogTitle>¿Convertir a comprobante?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se creará una cuenta de cobro a partir de la cotización "
-              {currentQuote.quote_number}". La cuenta de cobro incluirá todos
-              los elementos y montos de esta cotización. El vencimiento será de
-              30 días a partir de hoy.
+              Se creará un comprobante de servicio a partir de la cotización "
+              {currentQuote.quote_number}". El comprobante incluirá todos los
+              elementos y montos de esta cotización. El vencimiento será de 30
+              días a partir de hoy.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -632,7 +632,7 @@ export default function QuoteDetail() {
               disabled={invoicesLoading}
               className="bg-green-600 hover:bg-green-700"
             >
-              {invoicesLoading ? "Convirtiendo..." : "Crear Cuenta de Cobro"}
+              {invoicesLoading ? "Convirtiendo..." : "Crear Comprobante"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
