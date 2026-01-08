@@ -67,7 +67,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   })
 
   @beforeSave()
-  static async hashPassword<T extends typeof User>(this: T, user: InstanceType<T>) {
+  static async hashUserPassword(user: User) {
     if (user.$dirty.password) {
       user.password = await hash.make(user.password)
     }
