@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column, manyToMany, hasMany, beforeSave } from '@adonisjs/lucid/orm'
+import { BaseModel, column, manyToMany, hasMany } from '@adonisjs/lucid/orm'
 import type { ManyToMany, HasMany } from '@adonisjs/lucid/types/relations'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
@@ -66,12 +66,8 @@ export default class User extends compose(BaseModel, AuthFinder) {
     tokenSecretLength: 40,
   })
 
-  @beforeSave()
-  static async hashUserPassword(user: User) {
-    if (user.$dirty.password) {
-      user.password = await hash.make(user.password)
-    }
-  }
+  // NOTE: Password hashing is handled automatically by the AuthFinder mixin (withAuthFinder)
+  // Do NOT add a manual @beforeSave hook for password hashing - it will cause double hashing!
 
   // Helper methods
   get isVerified(): boolean {
