@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format, addDays } from "date-fns";
 import { useInvoiceStore, InvoiceItem } from "@/stores/invoiceStore";
-import { useClientStore, Project } from "@/stores/clientStore";
+import { useClientStore, Client, Project } from "@/stores/clientStore";
+import api from "@/utils/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,6 +67,7 @@ export default function InvoiceForm() {
   const [clientProjects, setClientProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  const [missingClient, setMissingClient] = useState<Client | null>(null);
 
   const form = useForm<InvoiceFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -96,6 +98,41 @@ export default function InvoiceForm() {
   useEffect(() => {
     fetchClients(1, 100);
   }, [fetchClients]);
+
+  // If editing and the invoice's client isn't in the current clients page,
+  // fetch it so the Select can render the selected label.
+  useEffect(() => {
+    if (!isEdit || !currentInvoice || clients.length === 0) return;
+
+    const clientIdRaw = currentInvoice.client_id;
+    if (clientIdRaw === null || clientIdRaw === undefined) return;
+
+    const clientId = Number(clientIdRaw);
+    if (!Number.isFinite(clientId) || clientId <= 0) return;
+
+    const exists = clients.some((c) => Number(c.id) === clientId);
+    if (exists) {
+      if (missingClient?.id === clientId) setMissingClient(null);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await api.get(`/api/v1/clients/${clientId}`);
+        if (!cancelled) {
+          setMissingClient(response.data as Client);
+          setFormKey((k) => k + 1);
+        }
+      } catch {
+        // ignore: we can still render the form without the label
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, currentInvoice, clients, missingClient?.id]);
 
   // Load invoice if editing
   useEffect(() => {
@@ -177,6 +214,7 @@ export default function InvoiceForm() {
     const numClientId = Number.parseInt(clientId, 10);
     form.setValue("client_id", numClientId);
     form.setValue("project_id", null);
+    setMissingClient(null);
 
     if (numClientId > 0) {
       await loadProjectsForClient(numClientId);
@@ -281,8 +319,15 @@ export default function InvoiceForm() {
                     <FormItem>
                       <FormLabel>Cliente *</FormLabel>
                       <Select
-                        value={field.value ? String(field.value) : ""}
-                        onValueChange={handleClientChange}
+                        key={`client-select-${formKey}-${field.value}`}
+                        value={
+                          !field.value || field.value === 0
+                            ? ""
+                            : String(field.value)
+                        }
+                        onValueChange={(value: string) => {
+                          void handleClientChange(value);
+                        }}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -290,7 +335,15 @@ export default function InvoiceForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {clients.map((client) => (
+                          {(missingClient
+                            ? [
+                                missingClient,
+                                ...clients.filter(
+                                  (c) => Number(c.id) !== missingClient.id
+                                ),
+                              ]
+                            : clients
+                          ).map((client) => (
                             <SelectItem
                               key={client.id}
                               value={String(client.id)}
@@ -313,6 +366,7 @@ export default function InvoiceForm() {
                     <FormItem>
                       <FormLabel>Proyecto (opcional)</FormLabel>
                       <Select
+                        key={`project-select-${formKey}-${field.value}`}
                         value={field.value ? String(field.value) : "none"}
                         onValueChange={(value) =>
                           field.onChange(
