@@ -191,6 +191,8 @@ export default class InvoicesController {
             quantity: itemData.quantity,
             unitPrice: itemData.unit_price,
             subtotal: Math.round(itemSubtotal * 100) / 100,
+            paymentType: itemData.payment_type || 'unico',
+            notes: itemData.notes || null,
             sortOrder: index,
           },
           { client: trx }
@@ -263,6 +265,8 @@ export default class InvoicesController {
               quantity: itemData.quantity,
               unitPrice: itemData.unit_price,
               subtotal: Math.round(itemSubtotal * 100) / 100,
+              paymentType: itemData.payment_type || 'unico',
+              notes: itemData.notes || null,
               sortOrder: index,
             },
             { client: trx }

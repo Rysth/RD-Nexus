@@ -23,6 +23,12 @@ export default class QuoteItem extends BaseModel {
   declare subtotal: number
 
   @column()
+  declare paymentType: 'unico' | 'anual' | 'mensual'
+
+  @column()
+  declare notes: string | null
+
+  @column()
   declare sortOrder: number
 
   @column.dateTime({ autoCreate: true })
@@ -44,6 +50,8 @@ export default class QuoteItem extends BaseModel {
       quantity: Number(this.quantity),
       unit_price: Number(this.unitPrice),
       subtotal: Number(this.subtotal),
+      payment_type: this.paymentType || 'unico',
+      notes: this.notes,
       sort_order: this.sortOrder,
       created_at: this.createdAt?.toISO(),
       updated_at: this.updatedAt?.toISO(),

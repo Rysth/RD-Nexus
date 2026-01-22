@@ -34,6 +34,11 @@ const invoiceItemSchema = z.object({
   description: z.string().min(1, "Descripción es requerida"),
   quantity: z.coerce.number().min(0.01, "Mínimo 0.01"),
   unit_price: z.coerce.number().min(0, "Precio debe ser >= 0"),
+  payment_type: z
+    .enum(["unico", "anual", "mensual"])
+    .optional()
+    .default("unico"),
+  notes: z.string().optional(),
 });
 
 const invoiceFormSchema = z.object({
@@ -84,6 +89,8 @@ export default function InvoiceForm() {
           description: "",
           quantity: 1,
           unit_price: 0,
+          payment_type: "unico",
+          notes: "",
         },
       ],
     },
@@ -173,6 +180,8 @@ export default function InvoiceForm() {
             description: item.description,
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price),
+            payment_type: item.payment_type || "unico",
+            notes: item.notes || "",
           })) || [],
       });
 
@@ -194,7 +203,7 @@ export default function InvoiceForm() {
   }, [isEdit, currentInvoice, clients.length, form]);
 
   const loadProjectsForClient = async (
-    clientId: number
+    clientId: number,
   ): Promise<Project[]> => {
     setLoadingProjects(true);
     try {
@@ -233,7 +242,7 @@ export default function InvoiceForm() {
 
   const subtotal = watchedItems.reduce(
     (sum, item) => sum + calculateItemSubtotal(item),
-    0
+    0,
   );
   const taxAmount = subtotal * (watchedTaxRate / 100);
   const total = subtotal + taxAmount;
@@ -272,6 +281,8 @@ export default function InvoiceForm() {
       description: "",
       quantity: 1,
       unit_price: 0,
+      payment_type: "unico",
+      notes: "",
     });
   };
 
@@ -339,7 +350,7 @@ export default function InvoiceForm() {
                             ? [
                                 missingClient,
                                 ...clients.filter(
-                                  (c) => Number(c.id) !== missingClient.id
+                                  (c) => Number(c.id) !== missingClient.id,
                                 ),
                               ]
                             : clients
@@ -370,7 +381,7 @@ export default function InvoiceForm() {
                         value={field.value ? String(field.value) : "none"}
                         onValueChange={(value) =>
                           field.onChange(
-                            value === "none" ? null : Number(value)
+                            value === "none" ? null : Number(value),
                           )
                         }
                         disabled={
@@ -499,108 +510,162 @@ export default function InvoiceForm() {
                 {fields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="grid gap-4 p-4 border rounded-lg md:grid-cols-12"
+                    className="p-4 border rounded-lg space-y-4"
                   >
-                    {/* Description */}
-                    <div className="md:col-span-6">
-                      <FormField
-                        control={form.control}
-                        name={`items.${index}.description`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={index > 0 ? "sr-only" : ""}>
-                              Descripción
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Descripción del servicio..."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    {/* Row 1: Description, Quantity, Price, Payment Type, Subtotal */}
+                    <div className="grid gap-4 md:grid-cols-12 items-end">
+                      {/* Description */}
+                      <div className="md:col-span-4">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.description`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className={index > 0 ? "sr-only" : ""}>
+                                Descripción
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Descripción del servicio..."
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                    {/* Quantity */}
-                    <div className="md:col-span-2">
-                      <FormField
-                        control={form.control}
-                        name={`items.${index}.quantity`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={index > 0 ? "sr-only" : ""}>
-                              Cantidad
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                      {/* Quantity */}
+                      <div className="md:col-span-1">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.quantity`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className={index > 0 ? "sr-only" : ""}>
+                                Cant.
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="0.01"
+                                  step="0.01"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                    {/* Unit Price */}
-                    <div className="md:col-span-2">
-                      <FormField
-                        control={form.control}
-                        name={`items.${index}.unit_price`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={index > 0 ? "sr-only" : ""}>
-                              Precio
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                      {/* Unit Price */}
+                      <div className="md:col-span-2">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.unit_price`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className={index > 0 ? "sr-only" : ""}>
+                                P. Unitario
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                    {/* Subtotal & Remove */}
-                    <div className="flex items-end gap-2 md:col-span-2">
-                      <div className="flex-1">
+                      {/* Payment Type */}
+                      <div className="md:col-span-2">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.payment_type`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className={index > 0 ? "sr-only" : ""}>
+                                Tipo Pago
+                              </FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value || "unico"}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Tipo" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="unico">Único</SelectItem>
+                                  <SelectItem value="mensual">
+                                    Mensual
+                                  </SelectItem>
+                                  <SelectItem value="anual">Anual</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Subtotal */}
+                      <div className="md:col-span-2 text-right">
                         <p
                           className={`text-sm font-medium ${
                             index === 0 ? "" : "md:hidden"
                           }`}
                         >
                           {index === 0 && (
-                            <span className="block mb-2">Subtotal</span>
+                            <span className="block mb-2">Total</span>
                           )}
                         </p>
                         <p className="py-2 font-semibold">
                           {formatCurrency(
-                            calculateItemSubtotal(watchedItems[index])
+                            calculateItemSubtotal(watchedItems[index]),
                           )}
                         </p>
                       </div>
-                      {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+
+                      {/* Remove Button */}
+                      <div className="md:col-span-1 flex justify-end">
+                        {fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Row 2: Notes (optional) */}
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.notes`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Notas adicionales del item (opcional)..."
+                              className="resize-none min-h-[60px]"
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 ))}
               </div>

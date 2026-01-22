@@ -56,6 +56,10 @@ const quoteItemSchema = z.object({
   quantity: z.coerce.number().min(0.01, "Mínimo 0.01"),
   unit_price: z.coerce.number().min(0, "Precio debe ser >= 0"),
   discount_percent: z.coerce.number().min(0).max(100).optional().default(0),
+  payment_type: z
+    .enum(["unico", "anual", "mensual"])
+    .optional()
+    .default("unico"),
   notes: z.string().optional(),
 });
 
@@ -109,7 +113,20 @@ export default function QuoteForm() {
       valid_until: format(addDays(new Date(), 30), "yyyy-MM-dd"),
       discount_percent: 0,
       tax_rate: 15,
-      terms_conditions: "",
+      terms_conditions: `CONDICIONES DE SERVICIO Y PAGOS:
+
+1. FORMA DE PAGO:
+   - Anticipo del 40% para iniciar la configuración, despliegue y carga de datos.
+   - El 60% restante se cancela contra entrega del sistema funcional y validado.
+
+2. REQUISITOS DEL CLIENTE:
+   - Para iniciar, el cliente deberá proveer: Logotipo de la marca (formato PNG/JPG alta calidad) e imágenes referenciales de los premios para el diseño de la interfaz.
+
+3. COSTOS RECURRENTES (Suscripción):
+   - Infraestructura: Pago mensual (Servidor, SSL, Respaldos). Se abona mes a mes ininterrumpidamente.
+   - Licencia: Pago anual. Se renueva cada año para mantener el derecho de uso del software y actualizaciones.
+
+4. SUSPENSIÓN: En caso de impago de la mensualidad o renovación anual, el servicio se suspenderá temporalmente a los 5 días del vencimiento.`,
       notes: "",
       items: [
         {
@@ -117,6 +134,7 @@ export default function QuoteForm() {
           quantity: 1,
           unit_price: 0,
           discount_percent: 0,
+          payment_type: "unico",
           notes: "",
         },
       ],
@@ -195,6 +213,7 @@ export default function QuoteForm() {
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price),
             discount_percent: Number(item.discount_percent) || 0,
+            payment_type: item.payment_type || "unico",
             notes: item.notes || "",
           })) || [],
       });
@@ -221,7 +240,7 @@ export default function QuoteForm() {
 
   // Función para cargar proyectos de un cliente
   const loadProjectsForClient = async (
-    clientId: number
+    clientId: number,
   ): Promise<Project[]> => {
     setLoadingProjects(true);
     try {
@@ -263,7 +282,7 @@ export default function QuoteForm() {
 
   const subtotal = watchedItems.reduce(
     (sum, item) => sum + calculateItemSubtotal(item),
-    0
+    0,
   );
   const discountAmount = subtotal * (watchedDiscountPercent / 100);
   const taxableAmount = subtotal - discountAmount;
@@ -305,6 +324,7 @@ export default function QuoteForm() {
       quantity: 1,
       unit_price: 0,
       discount_percent: 0,
+      payment_type: "unico",
       notes: "",
     });
   };
@@ -431,8 +451,8 @@ export default function QuoteForm() {
                                     loadingProjects
                                       ? "Cargando proyectos..."
                                       : clientProjects.length === 0
-                                      ? "Sin proyectos"
-                                      : "Seleccionar proyecto"
+                                        ? "Sin proyectos"
+                                        : "Seleccionar proyecto"
                                   }
                                 />
                               </SelectTrigger>
@@ -498,171 +518,231 @@ export default function QuoteForm() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="min-w-[200px]">
-                            Descripción
-                          </TableHead>
-                          <TableHead className="w-20">Cantidad</TableHead>
-                          <TableHead className="w-28">P. Unitario</TableHead>
-                          <TableHead className="w-20">Desc. %</TableHead>
-                          <TableHead className="text-right w-28">
-                            Subtotal
-                          </TableHead>
-                          <TableHead className="w-12" />
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {fields.map((field, index) => {
-                          const itemSubtotal = calculateItemSubtotal(
-                            watchedItems[index] || {
-                              quantity: 0,
-                              unit_price: 0,
-                              discount_percent: 0,
-                            }
-                          );
-                          return (
-                            <TableRow key={field.id}>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`items.${index}.description`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          placeholder="Descripción del item"
-                                          {...field}
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`items.${index}.quantity`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          step="0.01"
-                                          min="0.01"
-                                          className="w-20"
-                                          {...field}
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`items.${index}.unit_price`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          className="w-28"
-                                          {...field}
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`items.${index}.discount_percent`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          max="100"
-                                          className="w-20"
-                                          {...field}
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell className="font-medium text-right">
-                                {formatCurrency(itemSubtotal)}
-                              </TableCell>
-                              <TableCell>
-                                {fields.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => remove(index)}
-                                  >
-                                    <Trash2 className="w-4 h-4 text-red-500" />
-                                  </Button>
+                  <div className="space-y-4">
+                    {fields.map((field, index) => {
+                      const itemSubtotal = calculateItemSubtotal(
+                        watchedItems[index] || {
+                          quantity: 0,
+                          unit_price: 0,
+                          discount_percent: 0,
+                        },
+                      );
+                      return (
+                        <div
+                          key={field.id}
+                          className="p-4 border rounded-lg space-y-4"
+                        >
+                          {/* Row 1: Description, Quantity, Price, Discount, Payment Type, Subtotal */}
+                          <div className="grid gap-4 md:grid-cols-12 items-end">
+                            <div className="md:col-span-4">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.description`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel
+                                      className={index > 0 ? "sr-only" : ""}
+                                    >
+                                      Descripción
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="Descripción del servicio"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
                                 )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                      <TableFooter>
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-right">
-                            Subtotal
-                          </TableCell>
-                          <TableCell className="font-medium text-right">
-                            {formatCurrency(subtotal)}
-                          </TableCell>
-                          <TableCell />
-                        </TableRow>
-                        {watchedDiscountPercent > 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-right">
-                              Descuento ({watchedDiscountPercent}%)
-                            </TableCell>
-                            <TableCell className="text-right text-red-600">
-                              -{formatCurrency(discountAmount)}
-                            </TableCell>
-                            <TableCell />
-                          </TableRow>
-                        )}
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-right">
-                            IVA ({watchedTaxRate}%)
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(taxAmount)}
-                          </TableCell>
-                          <TableCell />
-                        </TableRow>
-                        <TableRow className="bg-muted/50">
-                          <TableCell
-                            colSpan={4}
-                            className="text-lg font-bold text-right"
-                          >
-                            Total
-                          </TableCell>
-                          <TableCell className="text-lg font-bold text-right">
-                            {formatCurrency(total)}
-                          </TableCell>
-                          <TableCell />
-                        </TableRow>
-                      </TableFooter>
-                    </Table>
+                              />
+                            </div>
+                            <div className="md:col-span-1">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.quantity`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel
+                                      className={index > 0 ? "sr-only" : ""}
+                                    >
+                                      Cant.
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.unit_price`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel
+                                      className={index > 0 ? "sr-only" : ""}
+                                    >
+                                      P. Unitario
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <div className="md:col-span-1">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.discount_percent`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel
+                                      className={index > 0 ? "sr-only" : ""}
+                                    >
+                                      Desc. %
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.payment_type`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel
+                                      className={index > 0 ? "sr-only" : ""}
+                                    >
+                                      Tipo Pago
+                                    </FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value || "unico"}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Tipo" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="unico">
+                                          Único
+                                        </SelectItem>
+                                        <SelectItem value="mensual">
+                                          Mensual
+                                        </SelectItem>
+                                        <SelectItem value="anual">
+                                          Anual
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <div className="md:col-span-1 text-right">
+                              <p
+                                className={`text-sm font-medium ${
+                                  index === 0 ? "" : "md:hidden"
+                                }`}
+                              >
+                                {index === 0 && (
+                                  <span className="block mb-2">Total</span>
+                                )}
+                              </p>
+                              <p className="py-2 font-semibold">
+                                {formatCurrency(itemSubtotal)}
+                              </p>
+                            </div>
+                            <div className="md:col-span-1 flex justify-end">
+                              {fields.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => remove(index)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Row 2: Notes (optional) */}
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.notes`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Notas adicionales del item (opcional)..."
+                                    className="resize-none min-h-[60px]"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* Totals Summary */}
+                  <div className="flex justify-end mt-6">
+                    <div className="w-72 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-medium">
+                          {formatCurrency(subtotal)}
+                        </span>
+                      </div>
+                      {watchedDiscountPercent > 0 && (
+                        <div className="flex justify-between text-red-600">
+                          <span>Descuento ({watchedDiscountPercent}%):</span>
+                          <span>-{formatCurrency(discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          IVA ({watchedTaxRate}%):
+                        </span>
+                        <span className="font-medium">
+                          {formatCurrency(taxAmount)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-lg pt-2 border-t">
+                        <span className="font-semibold">Total:</span>
+                        <span className="font-bold text-primary">
+                          {formatCurrency(total)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   {form.formState.errors.items && (
                     <p className="mt-2 text-sm text-red-500">
                       {form.formState.errors.items.message}

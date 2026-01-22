@@ -21,6 +21,8 @@ const quoteItemSchema = vine.object({
   description: vine.string().trim().minLength(1).maxLength(500),
   quantity: vine.number().positive(),
   unit_price: vine.number().min(0),
+  payment_type: vine.enum(['unico', 'anual', 'mensual']).optional(),
+  notes: vine.string().trim().maxLength(2000).nullable().optional(),
 })
 
 const createQuoteValidator = vine.compile(
@@ -262,6 +264,8 @@ export default class QuotesController {
             quantity: item.quantity,
             unitPrice: item.unit_price,
             subtotal: Math.round(itemSubtotal * 100) / 100,
+            paymentType: item.payment_type || 'unico',
+            notes: item.notes || null,
             sortOrder: i + 1,
           },
           { client: trx }
@@ -368,6 +372,8 @@ export default class QuotesController {
               quantity: item.quantity,
               unitPrice: item.unit_price,
               subtotal: Math.round(itemSubtotal * 100) / 100,
+              paymentType: item.payment_type || 'unico',
+              notes: item.notes || null,
               sortOrder: i + 1,
             },
             { client: trx }

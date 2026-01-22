@@ -21,6 +21,8 @@ export interface InvoiceItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  payment_type?: 'unico' | 'anual' | 'mensual';
+  notes?: string | null;
   sort_order?: number;
 }
 
@@ -87,6 +89,8 @@ interface CreateInvoiceItemData {
   description: string;
   quantity: number;
   unit_price: number;
+  payment_type?: 'unico' | 'anual' | 'mensual';
+  notes?: string;
 }
 
 interface CreateInvoiceData {

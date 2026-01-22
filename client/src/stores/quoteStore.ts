@@ -21,6 +21,7 @@ export interface QuoteItem {
   unit_price: number;
   discount_percent: number;
   subtotal: number;
+  payment_type?: 'unico' | 'anual' | 'mensual';
   notes?: string | null;
   sort_order?: number;
   created_at?: string;
@@ -74,6 +75,7 @@ interface CreateQuoteItemData {
   quantity: number;
   unit_price: number;
   discount_percent?: number;
+  payment_type?: 'unico' | 'anual' | 'mensual';
   notes?: string;
 }
 
