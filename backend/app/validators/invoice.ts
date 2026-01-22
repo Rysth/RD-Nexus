@@ -11,6 +11,7 @@ export const createInvoiceValidator = vine.compile(
     due_date: vine.string(),
     tax_rate: vine.number().min(0).max(100).optional(),
     notes: vine.string().optional(),
+    terms_conditions: vine.string().optional(),
     items: vine.array(
       vine.object({
         description: vine.string().minLength(1),
@@ -32,6 +33,7 @@ export const updateInvoiceValidator = vine.compile(
     due_date: vine.string().optional(),
     tax_rate: vine.number().min(0).max(100).optional(),
     notes: vine.string().optional(),
+    terms_conditions: vine.string().optional(),
     items: vine.array(
       vine.object({
         id: vine.number().positive().optional(),

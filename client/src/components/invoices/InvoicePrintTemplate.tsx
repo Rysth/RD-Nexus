@@ -312,6 +312,28 @@ const InvoicePrintTemplate = forwardRef<
         </div>
       )}
 
+      {/* Terms and Conditions */}
+      {invoice.terms_conditions && (
+        <div className="quote-section quote-terms">
+          <div className="quote-section-header">
+            <span>Términos y Condiciones</span>
+          </div>
+          <div className="quote-terms-content">
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                fontFamily: "inherit",
+                fontSize: "9px",
+                lineHeight: "1.4",
+                margin: 0,
+              }}
+            >
+              {invoice.terms_conditions}
+            </pre>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="quote-footer">
         <p>Gracias por su preferencia</p>

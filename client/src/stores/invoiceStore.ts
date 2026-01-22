@@ -42,6 +42,7 @@ export interface Invoice {
   tax_amount: number;
   total: number;
   notes: string | null;
+  terms_conditions: string | null;
   payment_date: string | null;
   payment_method: "transfer" | "cash" | "card" | "other" | null;
   payment_method_label: string | null;

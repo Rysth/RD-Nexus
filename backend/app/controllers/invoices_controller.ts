@@ -177,6 +177,7 @@ export default class InvoicesController {
           taxAmount,
           total,
           notes: data.notes || null,
+          termsConditions: data.terms_conditions || null,
         },
         { client: trx }
       )
@@ -248,6 +249,9 @@ export default class InvoicesController {
       }
       if (data.notes !== undefined) {
         invoice.notes = data.notes || null
+      }
+      if (data.terms_conditions !== undefined) {
+        invoice.termsConditions = data.terms_conditions || null
       }
 
       // Update items if provided

@@ -53,6 +53,9 @@ export default class Invoice extends BaseModel {
   @column()
   declare notes: string | null
 
+  @column()
+  declare termsConditions: string | null
+
   // Información de pago
   @column.date()
   declare paymentDate: DateTime | null
@@ -171,6 +174,7 @@ export default class Invoice extends BaseModel {
       tax_amount: Number(this.taxAmount),
       total: Number(this.total),
       notes: this.notes,
+      terms_conditions: this.termsConditions,
       payment_date: this.serializeDate(this.paymentDate),
       payment_method: this.paymentMethod,
       payment_method_label: this.paymentMethodLabel,

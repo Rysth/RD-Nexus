@@ -48,10 +48,26 @@ const invoiceFormSchema = z.object({
   due_date: z.string().min(1, "Fecha de vencimiento es requerida"),
   tax_rate: z.coerce.number().min(0).max(100).optional().default(15),
   notes: z.string().optional(),
+  terms_conditions: z.string().optional(),
   items: z.array(invoiceItemSchema).min(1, "Agrega al menos un elemento"),
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
+
+const DEFAULT_TERMS_CONDITIONS = `TÉRMINOS Y CONDICIONES:
+
+1. FORMA DE PAGO: El pago debe realizarse dentro del plazo indicado en este documento.
+
+2. MÉTODOS DE PAGO ACEPTADOS:
+   • Transferencia bancaria a la cuenta indicada
+   • Efectivo
+   • Tarjeta de crédito/débito
+
+3. MORA E INTERESES: Facturas vencidas pueden generar cargos por mora según lo establecido por la ley.
+
+4. SOPORTE TÉCNICO: Para consultas relacionadas con esta factura, contacte a nuestro equipo de soporte.
+
+5. GARANTÍA: Los servicios prestados están sujetos a las garantías acordadas en el contrato de servicio.`;
 
 export default function InvoiceForm() {
   const navigate = useNavigate();
@@ -84,6 +100,7 @@ export default function InvoiceForm() {
       due_date: format(addDays(new Date(), 15), "yyyy-MM-dd"),
       tax_rate: 15,
       notes: "",
+      terms_conditions: DEFAULT_TERMS_CONDITIONS,
       items: [
         {
           description: "",
@@ -175,6 +192,8 @@ export default function InvoiceForm() {
           return Number.isFinite(num) ? num : 15;
         })(),
         notes: currentInvoice.notes || "",
+        terms_conditions:
+          currentInvoice.terms_conditions || DEFAULT_TERMS_CONDITIONS,
         items:
           currentInvoice.items?.map((item: InvoiceItem) => ({
             description: item.description,
@@ -481,6 +500,25 @@ export default function InvoiceForm() {
                       <Textarea
                         placeholder="Notas adicionales..."
                         className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Terms and Conditions */}
+              <FormField
+                control={form.control}
+                name="terms_conditions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Términos y Condiciones</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Términos y condiciones..."
+                        className="resize-none min-h-[200px]"
                         {...field}
                       />
                     </FormControl>
