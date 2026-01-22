@@ -30,9 +30,12 @@ const createQuoteValidator = vine.compile(
     client_id: vine.number().positive(),
     project_id: vine.number().positive().nullable().optional(),
     title: vine.string().trim().minLength(2).maxLength(200),
+    description: vine.string().trim().maxLength(2000).nullable().optional(),
     issue_date: vine.string(), // ISO date string
     valid_until: vine.string(), // ISO date string
+    discount_percent: vine.number().min(0).max(100).optional(),
     tax_rate: vine.number().min(0).max(100).optional(),
+    terms_conditions: vine.string().trim().maxLength(5000).nullable().optional(),
     notes: vine.string().trim().maxLength(2000).nullable().optional(),
     items: vine.array(quoteItemSchema).minLength(1),
   })
@@ -43,10 +46,13 @@ const updateQuoteValidator = vine.compile(
     client_id: vine.number().positive().optional(),
     project_id: vine.number().positive().nullable().optional(),
     title: vine.string().trim().minLength(2).maxLength(200).optional(),
+    description: vine.string().trim().maxLength(2000).nullable().optional(),
     issue_date: vine.string().optional(),
     valid_until: vine.string().optional(),
     status: vine.string().in(['draft', 'sent', 'approved', 'rejected']).optional(),
+    discount_percent: vine.number().min(0).max(100).optional(),
     tax_rate: vine.number().min(0).max(100).optional(),
+    terms_conditions: vine.string().trim().maxLength(5000).nullable().optional(),
     notes: vine.string().trim().maxLength(2000).nullable().optional(),
     items: vine.array(quoteItemSchema).optional(),
   })
@@ -79,16 +85,19 @@ export default class QuotesController {
   /**
    * Calculate totals from items
    */
-  private calculateTotals(items: { quantity: number; unit_price: number }[], taxRate: number) {
+  private calculateTotals(items: { quantity: number; unit_price: number }[], taxRate: number, discountPercent: number = 0) {
     const subtotal = items.reduce((acc, item) => {
       return acc + item.quantity * item.unit_price
     }, 0)
 
-    const taxAmount = subtotal * (taxRate / 100)
-    const total = subtotal + taxAmount
+    const discountAmount = subtotal * (discountPercent / 100)
+    const taxableAmount = subtotal - discountAmount
+    const taxAmount = taxableAmount * (taxRate / 100)
+    const total = taxableAmount + taxAmount
 
     return {
       subtotal: Math.round(subtotal * 100) / 100,
+      discountAmount: Math.round(discountAmount * 100) / 100,
       taxAmount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
     }
@@ -228,7 +237,8 @@ export default class QuotesController {
     }
 
     const taxRate = data.tax_rate ?? 15 // Default 15% IVA
-    const { subtotal, taxAmount, total } = this.calculateTotals(data.items, taxRate)
+    const discountPercent = data.discount_percent ?? 0
+    const { subtotal, discountAmount, taxAmount, total } = this.calculateTotals(data.items, taxRate, discountPercent)
 
     // Transaction: create quote + items
     const quote = await db.transaction(async (trx) => {
@@ -240,14 +250,18 @@ export default class QuotesController {
           projectId: data.project_id ?? null,
           quoteNumber,
           title: data.title,
+          description: data.description ?? null,
           issueDate: DateTime.fromISO(data.issue_date),
           validUntil: DateTime.fromISO(data.valid_until),
           status: 'draft',
           subtotal,
+          discountPercent,
+          discountAmount,
           taxRate,
           taxAmount,
           total,
           notes: data.notes ?? null,
+          termsConditions: data.terms_conditions ?? null,
         },
         { client: trx }
       )
@@ -336,23 +350,28 @@ export default class QuotesController {
     // Transaction: update quote + items
     await db.transaction(async (trx) => {
       const taxRate = data.tax_rate ?? quote.taxRate
+      const discountPercent = data.discount_percent ?? quote.discountPercent
 
       // Recalculate totals if items provided
       if (data.items && data.items.length > 0) {
-        const { subtotal, taxAmount, total } = this.calculateTotals(data.items, taxRate)
+        const { subtotal, discountAmount, taxAmount, total } = this.calculateTotals(data.items, taxRate, discountPercent)
 
         quote.merge({
           clientId: data.client_id ?? quote.clientId,
           projectId: data.project_id !== undefined ? data.project_id : quote.projectId,
           title: data.title ?? quote.title,
+          description: data.description !== undefined ? data.description : quote.description,
           issueDate: data.issue_date ? DateTime.fromISO(data.issue_date) : quote.issueDate,
           validUntil: data.valid_until ? DateTime.fromISO(data.valid_until) : quote.validUntil,
           status: (data.status as 'draft' | 'sent' | 'approved' | 'rejected') ?? quote.status,
           subtotal,
+          discountPercent,
+          discountAmount,
           taxRate,
           taxAmount,
           total,
           notes: data.notes !== undefined ? data.notes : quote.notes,
+          termsConditions: data.terms_conditions !== undefined ? data.terms_conditions : quote.termsConditions,
         })
 
         await quote.useTransaction(trx).save()
@@ -386,18 +405,28 @@ export default class QuotesController {
         if (data.client_id !== undefined) updateData.clientId = data.client_id
         if (data.project_id !== undefined) updateData.projectId = data.project_id
         if (data.title !== undefined) updateData.title = data.title
+        if (data.description !== undefined) updateData.description = data.description
         if (data.issue_date !== undefined) updateData.issueDate = DateTime.fromISO(data.issue_date)
         if (data.valid_until !== undefined)
           updateData.validUntil = DateTime.fromISO(data.valid_until)
         if (data.status !== undefined) updateData.status = data.status
         if (data.notes !== undefined) updateData.notes = data.notes
+        if (data.terms_conditions !== undefined) updateData.termsConditions = data.terms_conditions
 
-        // Recalculate if tax rate changed
-        if (data.tax_rate !== undefined && data.tax_rate !== quote.taxRate) {
-          const taxAmount = quote.subtotal * (data.tax_rate / 100)
-          updateData.taxRate = data.tax_rate
+        // Recalculate if tax rate or discount changed
+        const effectiveDiscountPercent = data.discount_percent ?? quote.discountPercent
+        const effectiveTaxRate = data.tax_rate ?? quote.taxRate
+        
+        if (data.tax_rate !== undefined || data.discount_percent !== undefined) {
+          const discountAmount = quote.subtotal * (effectiveDiscountPercent / 100)
+          const taxableAmount = quote.subtotal - discountAmount
+          const taxAmount = taxableAmount * (effectiveTaxRate / 100)
+          
+          updateData.discountPercent = effectiveDiscountPercent
+          updateData.discountAmount = Math.round(discountAmount * 100) / 100
+          updateData.taxRate = effectiveTaxRate
           updateData.taxAmount = Math.round(taxAmount * 100) / 100
-          updateData.total = Math.round((quote.subtotal + taxAmount) * 100) / 100
+          updateData.total = Math.round((taxableAmount + taxAmount) * 100) / 100
         }
 
         quote.merge(updateData)

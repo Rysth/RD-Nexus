@@ -21,6 +21,9 @@ export default class Quote extends BaseModel {
   @column()
   declare title: string
 
+  @column()
+  declare description: string | null
+
   @column.date()
   declare issueDate: DateTime
 
@@ -37,6 +40,12 @@ export default class Quote extends BaseModel {
   declare subtotal: number
 
   @column()
+  declare discountPercent: number
+
+  @column()
+  declare discountAmount: number
+
+  @column()
   declare taxRate: number
 
   @column()
@@ -47,6 +56,9 @@ export default class Quote extends BaseModel {
 
   @column()
   declare notes: string | null
+
+  @column()
+  declare termsConditions: string | null
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -107,15 +119,19 @@ export default class Quote extends BaseModel {
       client_id: this.clientId,
       quote_number: this.quoteNumber,
       title: this.title,
+      description: this.description,
       issue_date: this.serializeDate(this.issueDate),
       valid_until: this.serializeDate(this.validUntil),
       status: this.status,
       status_label: this.statusLabel,
       subtotal: Number(this.subtotal),
+      discount_percent: Number(this.discountPercent),
+      discount_amount: Number(this.discountAmount),
       tax_rate: Number(this.taxRate),
       tax_amount: Number(this.taxAmount),
       total: Number(this.total),
       notes: this.notes,
+      terms_conditions: this.termsConditions,
       is_editable: this.isEditable,
       is_expired: this.isExpired,
       created_at: this.createdAt?.toISO(),
