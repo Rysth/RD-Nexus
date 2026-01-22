@@ -240,7 +240,7 @@ export default function QuoteDetail() {
                     "dd MMM yyyy",
                     {
                       locale: es,
-                    }
+                    },
                   );
                 } catch {
                   return currentQuote.valid_until;
@@ -472,30 +472,55 @@ export default function QuoteDetail() {
           <CardTitle>Elementos de la Cotización</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50%]">Descripción</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Precio Unitario</TableHead>
-                <TableHead className="text-right">Subtotal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentQuote.items?.map((item, index) => (
-                <TableRow key={item.id || index}>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(item.unit_price)}
-                  </TableCell>
-                  <TableCell className="font-medium text-right">
-                    {formatCurrency(item.subtotal)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="space-y-4">
+            {currentQuote.items?.map((item, index) => (
+              <div
+                key={item.id || index}
+                className="p-4 border rounded-lg space-y-3"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium">{item.description}</p>
+                    {item.notes && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {item.notes}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-6 text-sm">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-xs">Cantidad</p>
+                      <p className="font-medium">{item.quantity}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-xs">
+                        P. Unitario
+                      </p>
+                      <p className="font-medium">
+                        {formatCurrency(item.unit_price)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-xs">Tipo</p>
+                      <p className="font-medium capitalize">
+                        {item.payment_type === "mensual"
+                          ? "Mensual"
+                          : item.payment_type === "anual"
+                            ? "Anual"
+                            : "Único"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-xs">Subtotal</p>
+                      <p className="font-semibold">
+                        {formatCurrency(item.subtotal)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* Totals */}
           <div className="flex justify-end mt-6">

@@ -10,7 +10,11 @@ layer(base);
 @layer base {
   html,
   body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui,
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
       sans-serif;
     color: var(--CL-neutral-black) !important;
     height: 100%;
@@ -29,8 +33,13 @@ layer(base);
   h4,
   h5,
   h6 {
-    font-family: "Poppins", "Inter", -apple-system, BlinkMacSystemFont,
-      system-ui, sans-serif;
+    font-family:
+      "Poppins",
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
+      sans-serif;
     font-weight: 600;
     letter-spacing: -0.025em;
   }
@@ -175,7 +184,11 @@ layer(base);
    ======================================== */
 
 .quote-print-template {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-size: 12px;
   color: #1a1a1a;
   background: #fff;
@@ -343,13 +356,23 @@ layer(base);
 }
 
 .quote-table .col-desc {
-  width: 40%;
+  width: 45%;
+  text-align: left;
 }
 
 .quote-table .col-qty,
 .quote-table .col-price,
-.quote-table .col-iva,
 .quote-table .col-subtotal {
+  text-align: right;
+  width: 12%;
+}
+
+.quote-table .col-type {
+  text-align: center;
+  width: 12%;
+}
+
+.quote-table .col-iva {
   text-align: right;
   width: 12%;
 }

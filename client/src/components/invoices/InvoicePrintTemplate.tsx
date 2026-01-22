@@ -188,26 +188,43 @@ const InvoicePrintTemplate = forwardRef<
         <table className="quote-table">
           <thead>
             <tr>
-              <th className="col-num">#</th>
               <th className="col-desc">Descripción</th>
               <th className="col-qty">Cantidad</th>
-              <th className="col-price">Precio</th>
-              <th className="col-iva">IVA</th>
-              <th className="col-subtotal">Subtotal</th>
+              <th className="col-price">P. Unitario</th>
+              <th className="col-type">Tipo</th>
+              <th className="col-subtotal">Total</th>
             </tr>
           </thead>
           <tbody>
             {invoice.items?.map((item, index) => {
               const itemIva = (item.subtotal * invoice.tax_rate) / 100;
+              const paymentTypeLabel =
+                item.payment_type === "mensual"
+                  ? "Mensual"
+                  : item.payment_type === "anual"
+                    ? "Anual"
+                    : "Único";
               return (
                 <tr key={item.id || index}>
-                  <td className="col-num">{index + 1}</td>
-                  <td className="col-desc">{item.description}</td>
+                  <td className="col-desc">
+                    <div style={{ fontWeight: 500 }}>{item.description}</div>
+                    {item.notes && (
+                      <div
+                        style={{
+                          fontSize: "0.85em",
+                          color: "#6b7280",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {item.notes}
+                      </div>
+                    )}
+                  </td>
                   <td className="col-qty">{item.quantity}</td>
                   <td className="col-price">
                     {formatCurrency(item.unit_price)}
                   </td>
-                  <td className="col-iva">{formatCurrency(itemIva)}</td>
+                  <td className="col-type">{paymentTypeLabel}</td>
                   <td className="col-subtotal">
                     {formatCurrency(item.subtotal + itemIva)}
                   </td>
