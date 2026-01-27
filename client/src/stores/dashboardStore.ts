@@ -20,6 +20,8 @@ export interface DashboardRevenue {
 
 export interface DashboardInvoices {
   pending_count: number;
+  partial_count: number;
+  partial_total: number;
   paid_count: number;
   overdue_count: number;
 }

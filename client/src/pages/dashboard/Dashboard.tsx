@@ -51,6 +51,7 @@ const formatDate = (dateString: string) => {
 const StatusBadge = ({ status }: { status: string }) => {
   const config: Record<string, { color: string; label: string }> = {
     pending: { color: "text-yellow-600", label: "Pendiente" },
+    partial: { color: "text-blue-600", label: "Pago Parcial" },
     paid: { color: "text-green-600", label: "Pagada" },
     overdue: { color: "text-red-600", label: "Vencida" },
     voided: { color: "text-gray-600", label: "Anulada" },
@@ -65,6 +66,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     <Badge variant="outline" className={`gap-1 ${color}`}>
       {status === "paid" && <CheckCircle2 className="w-3 h-3" />}
       {status === "pending" && <Clock className="w-3 h-3" />}
+      {status === "partial" && <DollarSign className="w-3 h-3" />}
       {status === "overdue" && <AlertCircle className="w-3 h-3" />}
       {label}
     </Badge>
@@ -121,6 +123,11 @@ export default function Dashboard() {
   // Invoice distribution data
   const invoiceDistribution = [
     { name: "Pendientes", value: stats.invoices.pending_count, color: "amber" },
+    {
+      name: "Pago Parcial",
+      value: stats.invoices.partial_count,
+      color: "blue",
+    },
     { name: "Pagadas", value: stats.invoices.paid_count, color: "emerald" },
     { name: "Vencidas", value: stats.invoices.overdue_count, color: "red" },
   ].filter((item) => item.value > 0);

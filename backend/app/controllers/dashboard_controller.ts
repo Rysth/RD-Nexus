@@ -26,6 +26,7 @@ export default class DashboardController {
           recurringServicesActive,
           recurringServicesAll,
           pendingInvoices,
+          partialInvoices,
           paidInvoices,
           overdueInvoices,
           pendingQuotes,
@@ -43,9 +44,10 @@ export default class DashboardController {
           RecurringService.query(),
           // Invoices
           Invoice.query().where('status', 'pending'),
+          Invoice.query().where('status', 'partial'),
           Invoice.query().where('status', 'paid'),
           Invoice.query()
-            .where('status', 'pending')
+            .whereIn('status', ['pending', 'partial'])
             .where('due_date', '<', DateTime.now().toSQLDate()),
           // Quotes
           Quote.query().whereIn('status', ['draft', 'sent']),
@@ -78,11 +80,15 @@ export default class DashboardController {
         // Total revenue (paid invoices)
         const totalRevenue = paidInvoices.reduce((sum, inv) => sum + Number(inv.total), 0)
 
-        // Pending revenue
-        const pendingRevenue = pendingInvoices.reduce((sum, inv) => sum + Number(inv.total), 0)
+        // Pending revenue (pending + partial balance due)
+        const pendingRevenue = pendingInvoices.reduce((sum, inv) => sum + Number(inv.total), 0) +
+          partialInvoices.reduce((sum, inv) => sum + Number(inv.balanceDue), 0)
+
+        // Partial payments revenue
+        const partialRevenue = partialInvoices.reduce((sum, inv) => sum + Number(inv.balanceDue), 0)
 
         // Overdue revenue
-        const overdueRevenue = overdueInvoices.reduce((sum, inv) => sum + Number(inv.total), 0)
+        const overdueRevenue = overdueInvoices.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.total), 0)
 
         // Monthly revenue breakdown (last 6 months)
         const sixMonthsAgo = DateTime.now().minus({ months: 6 }).startOf('month')
@@ -125,6 +131,8 @@ export default class DashboardController {
           // Invoice stats
           invoices: {
             pending_count: pendingInvoices.length,
+            partial_count: partialInvoices.length,
+            partial_total: Math.round(partialRevenue * 100) / 100,
             paid_count: paidInvoices.length,
             overdue_count: overdueInvoices.length,
           },
