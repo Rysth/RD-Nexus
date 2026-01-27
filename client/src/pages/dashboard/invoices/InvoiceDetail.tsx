@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Edit,
@@ -136,7 +137,10 @@ export default function InvoiceDetail() {
   useEffect(() => {
     if (
       searchParams.get("action") === "pay" &&
-      currentInvoice?.can_accept_payments
+      (currentInvoice?.can_accept_payments ??
+        ["pending", "partial", "overdue"].includes(
+          currentInvoice?.status || "",
+        ))
     ) {
       setPaymentAmount(
         String(currentInvoice.balance_due || currentInvoice.total),
@@ -236,6 +240,10 @@ export default function InvoiceDetail() {
     );
   }
 
+  const canAcceptPayments =
+    currentInvoice.can_accept_payments ??
+    ["pending", "partial", "overdue"].includes(currentInvoice.status);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -290,7 +298,7 @@ export default function InvoiceDetail() {
         </div>
 
         <div className="flex items-center gap-2">
-          {currentInvoice.can_accept_payments && (
+          {canAcceptPayments && (
             <Button onClick={openPayDialog}>
               <DollarSign className="mr-2 h-4 w-4" />
               Registrar Pago
@@ -505,213 +513,250 @@ export default function InvoiceDetail() {
         </Card>
       </div>
 
-      {/* Payments Section */}
-      {(currentInvoice.payments && currentInvoice.payments.length > 0) ||
-      currentInvoice.status === "partial" ? (
-        <Card
-          className={
-            currentInvoice.status === "paid"
-              ? "border-green-200 bg-green-50"
-              : "border-blue-200 bg-blue-50"
-          }
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle
-                className={`text-sm font-medium flex items-center gap-2 ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
-              >
-                <DollarSign className="h-4 w-4" />
-                Pagos Registrados ({currentInvoice.payments?.length || 0})
-              </CardTitle>
-              <div
-                className={`text-sm font-medium ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
-              >
-                Total Pagado: {formatCurrency(currentInvoice.total_paid)}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {currentInvoice.payments?.map((payment) => (
-                <div
-                  key={payment.id}
-                  className={`flex items-center justify-between p-3 rounded-lg ${currentInvoice.status === "paid" ? "bg-green-100" : "bg-blue-100"}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p
-                        className={`font-semibold ${currentInvoice.status === "paid" ? "text-green-800" : "text-blue-800"}`}
-                      >
-                        {formatCurrency(payment.amount)}
-                      </p>
-                      <p
-                        className={`text-xs ${currentInvoice.status === "paid" ? "text-green-600" : "text-blue-600"}`}
-                      >
-                        {payment.payment_method_label}
-                      </p>
-                    </div>
-                    <div
-                      className={`text-sm ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
-                    >
-                      {format(new Date(payment.payment_date), "dd MMM yyyy", {
-                        locale: es,
-                      })}
-                    </div>
-                    {payment.notes && (
-                      <p
-                        className={`text-sm ${currentInvoice.status === "paid" ? "text-green-600" : "text-blue-600"}`}
-                      >
-                        {payment.notes}
-                      </p>
-                    )}
-                  </div>
-                  {currentInvoice.status !== "voided" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-100"
-                      onClick={() => {
-                        setPaymentToDelete(payment);
-                        setDeletePaymentDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
+      <Tabs defaultValue="details" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="details">Detalles</TabsTrigger>
+          <TabsTrigger value="payments">Pagos</TabsTrigger>
+        </TabsList>
 
-            {/* Balance Due */}
-            {currentInvoice.balance_due > 0 && (
-              <div className="mt-4 pt-4 border-t border-blue-200 flex items-center justify-between">
-                <span className="text-blue-700 font-medium">
-                  Saldo Pendiente:
-                </span>
-                <span className="text-xl font-bold text-blue-800">
-                  {formatCurrency(currentInvoice.balance_due)}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* Items Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Elementos del Comprobante</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {currentInvoice.items?.map((item, index) => (
-              <div
-                key={item.id || index}
-                className="p-4 border rounded-lg space-y-3"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="font-medium">{item.description}</p>
-                    {item.notes && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {item.notes}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-center">
-                      <p className="text-muted-foreground text-xs">Cantidad</p>
-                      <p className="font-medium">{item.quantity}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground text-xs">
-                        P. Unitario
-                      </p>
-                      <p className="font-medium">
-                        {formatCurrency(item.unit_price)}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground text-xs">Tipo</p>
-                      <p className="font-medium capitalize">
-                        {item.payment_type === "mensual"
-                          ? "Mensual"
-                          : item.payment_type === "anual"
-                            ? "Anual"
-                            : "Único"}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground text-xs">Subtotal</p>
-                      <p className="font-semibold">
-                        {formatCurrency(item.subtotal)}
-                      </p>
+        <TabsContent value="details" className="space-y-6">
+          {/* Items Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Elementos del Comprobante</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {currentInvoice.items?.map((item, index) => (
+                  <div
+                    key={item.id || index}
+                    className="p-4 border rounded-lg space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.description}</p>
+                        {item.notes && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {item.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-6 text-sm">
+                        <div className="text-center">
+                          <p className="text-muted-foreground text-xs">
+                            Cantidad
+                          </p>
+                          <p className="font-medium">{item.quantity}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-muted-foreground text-xs">
+                            P. Unitario
+                          </p>
+                          <p className="font-medium">
+                            {formatCurrency(item.unit_price)}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-muted-foreground text-xs">Tipo</p>
+                          <p className="font-medium capitalize">
+                            {item.payment_type === "mensual"
+                              ? "Mensual"
+                              : item.payment_type === "anual"
+                                ? "Anual"
+                                : "Único"}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-muted-foreground text-xs">
+                            Subtotal
+                          </p>
+                          <p className="font-semibold">
+                            {formatCurrency(item.subtotal)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Totals */}
-          <div className="flex justify-end mt-6">
-            <div className="w-72 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span className="font-medium">
-                  {formatCurrency(currentInvoice.subtotal)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  IVA ({currentInvoice.tax_rate}%):
-                </span>
-                <span className="font-medium">
-                  {formatCurrency(currentInvoice.tax_amount)}
-                </span>
-              </div>
-              <Separator />
-              <div className="flex justify-between text-lg">
-                <span className="font-semibold">Total:</span>
-                <span className="font-bold text-primary">
-                  {formatCurrency(currentInvoice.total)}
-                </span>
-              </div>
-              {currentInvoice.total_paid > 0 && (
-                <>
-                  <div className="flex justify-between text-green-600">
-                    <span>Pagado:</span>
+              {/* Totals */}
+              <div className="flex justify-end mt-6">
+                <div className="w-72 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal:</span>
                     <span className="font-medium">
-                      -{formatCurrency(currentInvoice.total_paid)}
+                      {formatCurrency(currentInvoice.subtotal)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      IVA ({currentInvoice.tax_rate}%):
+                    </span>
+                    <span className="font-medium">
+                      {formatCurrency(currentInvoice.tax_amount)}
                     </span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg">
-                    <span className="font-semibold">Saldo Pendiente:</span>
-                    <span
-                      className={`font-bold ${currentInvoice.balance_due > 0 ? "text-orange-600" : "text-green-600"}`}
+                    <span className="font-semibold">Total:</span>
+                    <span className="font-bold text-primary">
+                      {formatCurrency(currentInvoice.total)}
+                    </span>
+                  </div>
+                  {currentInvoice.total_paid > 0 && (
+                    <>
+                      <div className="flex justify-between text-green-600">
+                        <span>Pagado:</span>
+                        <span className="font-medium">
+                          -{formatCurrency(currentInvoice.total_paid)}
+                        </span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between text-lg">
+                        <span className="font-semibold">Saldo Pendiente:</span>
+                        <span
+                          className={`font-bold ${currentInvoice.balance_due > 0 ? "text-orange-600" : "text-green-600"}`}
+                        >
+                          {formatCurrency(currentInvoice.balance_due)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          {currentInvoice.notes && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Notas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap">{currentInvoice.notes}</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-6">
+          {currentInvoice.payments && currentInvoice.payments.length > 0 ? (
+            <Card
+              className={
+                currentInvoice.status === "paid"
+                  ? "border-green-200 bg-green-50"
+                  : "border-blue-200 bg-blue-50"
+              }
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle
+                    className={`text-sm font-medium flex items-center gap-2 ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    Pagos Registrados ({currentInvoice.payments?.length || 0})
+                  </CardTitle>
+                  <div
+                    className={`text-sm font-medium ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
+                  >
+                    Total Pagado: {formatCurrency(currentInvoice.total_paid)}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {currentInvoice.payments?.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className={`flex items-center justify-between p-3 rounded-lg ${currentInvoice.status === "paid" ? "bg-green-100" : "bg-blue-100"}`}
                     >
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <p
+                            className={`font-semibold ${currentInvoice.status === "paid" ? "text-green-800" : "text-blue-800"}`}
+                          >
+                            {formatCurrency(payment.amount)}
+                          </p>
+                          <p
+                            className={`text-xs ${currentInvoice.status === "paid" ? "text-green-600" : "text-blue-600"}`}
+                          >
+                            {payment.payment_method_label}
+                          </p>
+                        </div>
+                        <div
+                          className={`text-sm ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
+                        >
+                          {format(
+                            new Date(payment.payment_date),
+                            "dd MMM yyyy",
+                            { locale: es },
+                          )}
+                        </div>
+                        {payment.notes && (
+                          <p
+                            className={`text-sm ${currentInvoice.status === "paid" ? "text-green-600" : "text-blue-600"}`}
+                          >
+                            {payment.notes}
+                          </p>
+                        )}
+                      </div>
+                      {currentInvoice.status !== "voided" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => {
+                            setPaymentToDelete(payment);
+                            setDeletePaymentDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Balance Due */}
+                {currentInvoice.balance_due > 0 && (
+                  <div className="mt-4 pt-4 border-t border-blue-200 flex items-center justify-between">
+                    <span className="text-blue-700 font-medium">
+                      Saldo Pendiente:
+                    </span>
+                    <span className="text-xl font-bold text-blue-800">
                       {formatCurrency(currentInvoice.balance_due)}
                     </span>
                   </div>
-                </>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notes */}
-      {currentInvoice.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Notas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap">{currentInvoice.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Historial de Pagos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  No hay pagos registrados todavía.
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    Saldo pendiente:
+                  </span>
+                  <span className="font-semibold">
+                    {formatCurrency(currentInvoice.balance_due)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Hidden Print Template */}
       <div className="hidden">
