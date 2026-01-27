@@ -305,7 +305,7 @@ export default class InvoiceService {
   async deletePayment(paymentId: number): Promise<Invoice> {
     const payment = await InvoicePayment.query()
       .where('id', paymentId)
-      .preload('invoice')
+      .preload('invoice' as any)
       .firstOrFail()
 
     const invoice = payment.invoice
