@@ -62,6 +62,7 @@ import Pagination from "@/components/common/Pagination";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500",
+  partial: "bg-blue-500",
   paid: "bg-green-500",
   overdue: "bg-red-500",
   voided: "bg-gray-500",
@@ -69,6 +70,7 @@ const statusColors: Record<string, string> = {
 
 const statusIcons: Record<string, React.ReactNode> = {
   pending: <Clock className="w-3 h-3" />,
+  partial: <DollarSign className="w-3 h-3" />,
   paid: <CheckCircle className="w-3 h-3" />,
   overdue: <AlertCircle className="w-3 h-3" />,
   voided: <Ban className="w-3 h-3" />,
@@ -96,10 +98,10 @@ export default function InvoiceList() {
   const [voidDialogOpen, setVoidDialogOpen] = useState(false);
   const [invoiceToAction, setInvoiceToAction] = useState<Invoice | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams.get("status") || ""
+    searchParams.get("status") || "",
   );
   const [clientFilter, setClientFilter] = useState<string>(
-    searchParams.get("client_id") || ""
+    searchParams.get("client_id") || "",
   );
 
   useEffect(() => {
@@ -212,7 +214,7 @@ export default function InvoiceList() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
@@ -224,6 +226,20 @@ export default function InvoiceList() {
             </div>
             <p className="text-xs text-muted-foreground">
               {formatCurrency(invoiceStats?.pending_total || 0)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium">Pago Parcial</CardTitle>
+            <DollarSign className="w-4 h-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {invoiceStats?.partial_count || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(invoiceStats?.partial_total || 0)}
             </p>
           </CardContent>
         </Card>
@@ -283,6 +299,7 @@ export default function InvoiceList() {
           <SelectContent>
             <SelectItem value="all">Todos los estados</SelectItem>
             <SelectItem value="pending">Pendiente</SelectItem>
+            <SelectItem value="partial">Pago Parcial</SelectItem>
             <SelectItem value="paid">Pagada</SelectItem>
             <SelectItem value="overdue">Vencida</SelectItem>
             <SelectItem value="voided">Anulada</SelectItem>
@@ -429,7 +446,7 @@ export default function InvoiceList() {
                             <DropdownMenuItem
                               onClick={() =>
                                 navigate(
-                                  `/dashboard/invoices/${invoice.id}/edit`
+                                  `/dashboard/invoices/${invoice.id}/edit`,
                                 )
                               }
                             >
@@ -443,7 +460,7 @@ export default function InvoiceList() {
                             <DropdownMenuItem
                               onClick={() =>
                                 navigate(
-                                  `/dashboard/invoices/${invoice.id}?action=pay`
+                                  `/dashboard/invoices/${invoice.id}?action=pay`,
                                 )
                               }
                             >

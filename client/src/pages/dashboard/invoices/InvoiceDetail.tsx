@@ -1,19 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useInvoiceStore } from "@/stores/invoiceStore";
+import { useInvoiceStore, type InvoicePayment } from "@/stores/invoiceStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,7 +44,6 @@ import {
   ArrowLeft,
   Edit,
   Trash2,
-  FileText,
   MoreVertical,
   Building2,
   User,
@@ -75,6 +67,7 @@ import InvoicePrintTemplate from "@/components/invoices/InvoicePrintTemplate";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500",
+  partial: "bg-blue-500",
   paid: "bg-green-500",
   overdue: "bg-red-500",
   voided: "bg-gray-500",
@@ -82,6 +75,7 @@ const statusColors: Record<string, string> = {
 
 const statusIcons: Record<string, ReactNode> = {
   pending: <Clock className="h-4 w-4" />,
+  partial: <DollarSign className="h-4 w-4" />,
   paid: <CheckCircle className="h-4 w-4" />,
   overdue: <AlertCircle className="h-4 w-4" />,
   voided: <Ban className="h-4 w-4" />,
@@ -106,7 +100,8 @@ export default function InvoiceDetail() {
     invoicesLoading,
     fetchInvoice,
     deleteInvoice,
-    markAsPaid,
+    registerPayment,
+    deletePayment,
     voidInvoice,
     clearCurrentInvoice,
   } = useInvoiceStore();
@@ -116,7 +111,12 @@ export default function InvoiceDetail() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [voidDialogOpen, setVoidDialogOpen] = useState(false);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [deletePaymentDialogOpen, setDeletePaymentDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<InvoicePayment | null>(
+    null,
+  );
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<
     "transfer" | "cash" | "card" | "other"
   >("transfer");
@@ -136,8 +136,11 @@ export default function InvoiceDetail() {
   useEffect(() => {
     if (
       searchParams.get("action") === "pay" &&
-      currentInvoice?.status === "pending"
+      currentInvoice?.can_accept_payments
     ) {
+      setPaymentAmount(
+        String(currentInvoice.balance_due || currentInvoice.total),
+      );
       setPayDialogOpen(true);
     }
   }, [searchParams, currentInvoice]);
@@ -170,18 +173,41 @@ export default function InvoiceDetail() {
     }
   };
 
-  const handleMarkAsPaid = async () => {
+  const handleRegisterPayment = async () => {
     if (!currentInvoice) return;
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
     try {
-      await markAsPaid(currentInvoice.id, {
+      await registerPayment(currentInvoice.id, {
+        amount,
         payment_method: paymentMethod,
-        payment_notes: paymentNotes || undefined,
+        notes: paymentNotes || undefined,
       });
       setPayDialogOpen(false);
+      setPaymentAmount("");
       setPaymentNotes("");
     } catch {
       // Toast is shown in the store
     }
+  };
+
+  const handleDeletePayment = async () => {
+    if (!currentInvoice || !paymentToDelete) return;
+    try {
+      await deletePayment(currentInvoice.id, paymentToDelete.id);
+      setDeletePaymentDialogOpen(false);
+      setPaymentToDelete(null);
+    } catch {
+      // Toast is shown in the store
+    }
+  };
+
+  const openPayDialog = () => {
+    setPaymentAmount(
+      String(currentInvoice?.balance_due || currentInvoice?.total || 0),
+    );
+    setPayDialogOpen(true);
   };
 
   const formatCurrency = (value: number) => {
@@ -264,8 +290,8 @@ export default function InvoiceDetail() {
         </div>
 
         <div className="flex items-center gap-2">
-          {currentInvoice.status === "pending" && (
-            <Button onClick={() => setPayDialogOpen(true)}>
+          {currentInvoice.can_accept_payments && (
+            <Button onClick={openPayDialog}>
               <DollarSign className="mr-2 h-4 w-4" />
               Registrar Pago
             </Button>
@@ -479,46 +505,97 @@ export default function InvoiceDetail() {
         </Card>
       </div>
 
-      {/* Payment Info (if paid) */}
-      {currentInvoice.status === "paid" && (
-        <Card className="border-green-200 bg-green-50">
+      {/* Payments Section */}
+      {(currentInvoice.payments && currentInvoice.payments.length > 0) ||
+      currentInvoice.status === "partial" ? (
+        <Card
+          className={
+            currentInvoice.status === "paid"
+              ? "border-green-200 bg-green-50"
+              : "border-blue-200 bg-blue-50"
+          }
+        >
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-700">
-              <CheckCircle className="h-4 w-4" />
-              Información de Pago
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-green-700">
-            <div className="grid gap-2 md:grid-cols-3">
-              <div>
-                <span className="text-sm text-green-600">Método:</span>
-                <p className="font-medium">
-                  {currentInvoice.payment_method_label}
-                </p>
+            <div className="flex items-center justify-between">
+              <CardTitle
+                className={`text-sm font-medium flex items-center gap-2 ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
+              >
+                <DollarSign className="h-4 w-4" />
+                Pagos Registrados ({currentInvoice.payments?.length || 0})
+              </CardTitle>
+              <div
+                className={`text-sm font-medium ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
+              >
+                Total Pagado: {formatCurrency(currentInvoice.total_paid)}
               </div>
-              <div>
-                <span className="text-sm text-green-600">Fecha:</span>
-                <p className="font-medium">
-                  {currentInvoice.payment_date &&
-                    format(
-                      new Date(currentInvoice.payment_date),
-                      "dd MMM yyyy",
-                      {
-                        locale: es,
-                      },
-                    )}
-                </p>
-              </div>
-              {currentInvoice.payment_notes && (
-                <div>
-                  <span className="text-sm text-green-600">Notas:</span>
-                  <p className="font-medium">{currentInvoice.payment_notes}</p>
-                </div>
-              )}
             </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {currentInvoice.payments?.map((payment) => (
+                <div
+                  key={payment.id}
+                  className={`flex items-center justify-between p-3 rounded-lg ${currentInvoice.status === "paid" ? "bg-green-100" : "bg-blue-100"}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <p
+                        className={`font-semibold ${currentInvoice.status === "paid" ? "text-green-800" : "text-blue-800"}`}
+                      >
+                        {formatCurrency(payment.amount)}
+                      </p>
+                      <p
+                        className={`text-xs ${currentInvoice.status === "paid" ? "text-green-600" : "text-blue-600"}`}
+                      >
+                        {payment.payment_method_label}
+                      </p>
+                    </div>
+                    <div
+                      className={`text-sm ${currentInvoice.status === "paid" ? "text-green-700" : "text-blue-700"}`}
+                    >
+                      {format(new Date(payment.payment_date), "dd MMM yyyy", {
+                        locale: es,
+                      })}
+                    </div>
+                    {payment.notes && (
+                      <p
+                        className={`text-sm ${currentInvoice.status === "paid" ? "text-green-600" : "text-blue-600"}`}
+                      >
+                        {payment.notes}
+                      </p>
+                    )}
+                  </div>
+                  {currentInvoice.status !== "voided" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                      onClick={() => {
+                        setPaymentToDelete(payment);
+                        setDeletePaymentDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Balance Due */}
+            {currentInvoice.balance_due > 0 && (
+              <div className="mt-4 pt-4 border-t border-blue-200 flex items-center justify-between">
+                <span className="text-blue-700 font-medium">
+                  Saldo Pendiente:
+                </span>
+                <span className="text-xl font-bold text-blue-800">
+                  {formatCurrency(currentInvoice.balance_due)}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* Items Table */}
       <Card>
@@ -600,6 +677,25 @@ export default function InvoiceDetail() {
                   {formatCurrency(currentInvoice.total)}
                 </span>
               </div>
+              {currentInvoice.total_paid > 0 && (
+                <>
+                  <div className="flex justify-between text-green-600">
+                    <span>Pagado:</span>
+                    <span className="font-medium">
+                      -{formatCurrency(currentInvoice.total_paid)}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-lg">
+                    <span className="font-semibold">Saldo Pendiente:</span>
+                    <span
+                      className={`font-bold ${currentInvoice.balance_due > 0 ? "text-orange-600" : "text-green-600"}`}
+                    >
+                      {formatCurrency(currentInvoice.balance_due)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
@@ -667,6 +763,21 @@ export default function InvoiceDetail() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label>Monto del Pago *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={currentInvoice.balance_due}
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                placeholder={`Máximo: ${formatCurrency(currentInvoice.balance_due)}`}
+              />
+              <p className="text-xs text-muted-foreground">
+                Saldo pendiente: {formatCurrency(currentInvoice.balance_due)}
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label>Método de Pago</Label>
               <Select
                 value={paymentMethod}
@@ -693,22 +804,59 @@ export default function InvoiceDetail() {
                 onChange={(e) => setPaymentNotes(e.target.value)}
               />
             </div>
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total factura:</span>
+                <span>{formatCurrency(currentInvoice.total)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Ya pagado:</span>
+                <span>{formatCurrency(currentInvoice.total_paid)}</span>
+              </div>
+              <Separator />
               <div className="flex justify-between text-lg">
-                <span>Total a registrar:</span>
+                <span>Pago a registrar:</span>
                 <span className="font-bold text-primary">
-                  {formatCurrency(currentInvoice.total)}
+                  {formatCurrency(Number(paymentAmount) || 0)}
                 </span>
               </div>
+              {Number(paymentAmount) > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Saldo restante:</span>
+                  <span
+                    className={
+                      currentInvoice.balance_due - Number(paymentAmount) <= 0
+                        ? "text-green-600 font-medium"
+                        : ""
+                    }
+                  >
+                    {formatCurrency(
+                      Math.max(
+                        0,
+                        currentInvoice.balance_due - Number(paymentAmount),
+                      ),
+                    )}
+                    {currentInvoice.balance_due - Number(paymentAmount) <= 0 &&
+                      " (Pagado completo)"}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPayDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleMarkAsPaid}>
+            <Button
+              onClick={handleRegisterPayment}
+              disabled={
+                !paymentAmount ||
+                Number(paymentAmount) <= 0 ||
+                Number(paymentAmount) > currentInvoice.balance_due
+              }
+            >
               <CheckCircle className="mr-2 h-4 w-4" />
-              Confirmar Pago
+              Registrar Pago
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -754,6 +902,40 @@ export default function InvoiceDetail() {
               className="bg-orange-600 hover:bg-orange-700"
             >
               Anular
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Payment Dialog */}
+      <AlertDialog
+        open={deletePaymentDialogOpen}
+        onOpenChange={setDeletePaymentDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar pago?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el pago de{" "}
+              {paymentToDelete ? formatCurrency(paymentToDelete.amount) : ""}{" "}
+              registrado el{" "}
+              {paymentToDelete
+                ? format(
+                    new Date(paymentToDelete.payment_date),
+                    "dd MMM yyyy",
+                    { locale: es },
+                  )
+                : ""}
+              . El saldo de la factura se actualizará automáticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePayment}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar Pago
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

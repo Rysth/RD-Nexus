@@ -10,6 +10,7 @@ import {
   updateInvoiceValidator,
   convertFromQuoteValidator,
   markAsPaidValidator,
+  registerPaymentValidator,
 } from '#validators/invoice'
 
 // Cache TTLs (seconds)
@@ -127,6 +128,7 @@ export default class InvoicesController {
           .preload('client')
           .preload('project' as any)
           .preload('items', (query) => query.orderBy('sort_order', 'asc'))
+          .preload('payments', (query) => query.orderBy('payment_date', 'desc'))
           .preload('quote' as any)
           .preload('recurringService' as any)
           .firstOrFail()
@@ -136,6 +138,7 @@ export default class InvoicesController {
           client: invoice.client?.serializeForApi(),
           project: invoice.project?.serializeForApi(),
           items: invoice.items?.map((item) => item.serializeForApi()),
+          payments: invoice.payments?.map((payment) => payment.serializeForApi()),
           quote: invoice.quote
             ? { id: invoice.quote.id, quote_number: invoice.quote.quoteNumber, title: invoice.quote.title }
             : null,
@@ -176,6 +179,8 @@ export default class InvoicesController {
           taxRate,
           taxAmount,
           total,
+          totalPaid: 0,
+          balanceDue: total,
           notes: data.notes || null,
           termsConditions: data.terms_conditions || null,
         },
@@ -430,22 +435,26 @@ export default class InvoicesController {
     const stats = await CacheService.fetch(
       cacheKey,
       async () => {
-        const [pending, paid, overdue, voided] = await Promise.all([
+        const [pending, partial, paid, overdue, voided] = await Promise.all([
           Invoice.query().where('status', 'pending'),
+          Invoice.query().where('status', 'partial'),
           Invoice.query().where('status', 'paid'),
           Invoice.query()
-            .where('status', 'pending')
+            .whereIn('status', ['pending', 'partial'])
             .where('due_date', '<', DateTime.now().toSQLDate()),
           Invoice.query().where('status', 'voided'),
         ])
 
-        const pendingTotal = pending.reduce((sum, inv) => sum + Number(inv.total), 0)
+        const pendingTotal = pending.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.total), 0)
+        const partialTotal = partial.reduce((sum, inv) => sum + Number(inv.balanceDue || 0), 0)
         const paidTotal = paid.reduce((sum, inv) => sum + Number(inv.total), 0)
-        const overdueTotal = overdue.reduce((sum, inv) => sum + Number(inv.total), 0)
+        const overdueTotal = overdue.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.total), 0)
 
         return {
           pending_count: pending.length,
           pending_total: pendingTotal,
+          partial_count: partial.length,
+          partial_total: partialTotal,
           paid_count: paid.length,
           paid_total: paidTotal,
           overdue_count: overdue.length,
@@ -457,5 +466,96 @@ export default class InvoicesController {
     )
 
     return response.ok(stats)
+  }
+
+  /**
+   * POST /api/v1/invoices/:id/payments
+   * Register a payment (partial or full)
+   */
+  async registerPayment({ params, request, response }: HttpContext) {
+    const data = await request.validateUsing(registerPaymentValidator)
+
+    try {
+      const paymentDate = data.payment_date 
+        ? DateTime.fromISO(data.payment_date) 
+        : DateTime.now()
+
+      const { invoice, payment } = await this.invoiceService.registerPayment(
+        params.id,
+        {
+          amount: data.amount,
+          paymentDate,
+          paymentMethod: data.payment_method,
+          notes: data.notes,
+        }
+      )
+
+      // Invalidate cache
+      await CacheService.deleteMatched('invoices:*')
+
+      // Load relations
+      await invoice.load('client')
+      await invoice.load('project' as any)
+      await invoice.load('items')
+      await invoice.load('payments')
+
+      return response.ok({
+        invoice: {
+          ...invoice.serializeForApi(),
+          client: invoice.client?.serializeForApi(),
+          project: invoice.project?.serializeForApi(),
+          items: invoice.items?.map((item) => item.serializeForApi()),
+          payments: invoice.payments?.map((p) => p.serializeForApi()),
+        },
+        payment: payment.serializeForApi(),
+      })
+    } catch (error) {
+      return response.badRequest({
+        message: (error as Error).message,
+      })
+    }
+  }
+
+  /**
+   * GET /api/v1/invoices/:id/payments
+   * Get all payments for an invoice
+   */
+  async getPayments({ params, response }: HttpContext) {
+    const payments = await this.invoiceService.getPayments(params.id)
+
+    return response.ok({
+      data: payments.map((payment) => payment.serializeForApi()),
+    })
+  }
+
+  /**
+   * DELETE /api/v1/invoices/:id/payments/:paymentId
+   * Delete a payment
+   */
+  async deletePayment({ params, response }: HttpContext) {
+    try {
+      const invoice = await this.invoiceService.deletePayment(params.paymentId)
+
+      // Invalidate cache
+      await CacheService.deleteMatched('invoices:*')
+
+      // Load relations
+      await invoice.load('client')
+      await invoice.load('project' as any)
+      await invoice.load('items')
+      await invoice.load('payments')
+
+      return response.ok({
+        ...invoice.serializeForApi(),
+        client: invoice.client?.serializeForApi(),
+        project: invoice.project?.serializeForApi(),
+        items: invoice.items?.map((item) => item.serializeForApi()),
+        payments: invoice.payments?.map((p) => p.serializeForApi()),
+      })
+    } catch (error) {
+      return response.badRequest({
+        message: (error as Error).message,
+      })
+    }
   }
 }

@@ -6,6 +6,7 @@ import Project from '#models/project'
 import Quote from '#models/quote'
 import RecurringService from '#models/recurring_service'
 import InvoiceItem from '#models/invoice_item'
+import InvoicePayment from '#models/invoice_payment'
 
 export default class Invoice extends BaseModel {
   @column({ isPrimary: true })
@@ -33,10 +34,10 @@ export default class Invoice extends BaseModel {
   declare dueDate: DateTime
 
   /**
-   * Status: pending, paid, overdue, voided
+   * Status: pending, partial, paid, overdue, voided
    */
   @column()
-  declare status: 'pending' | 'paid' | 'overdue' | 'voided'
+  declare status: 'pending' | 'partial' | 'paid' | 'overdue' | 'voided'
 
   @column()
   declare subtotal: number
@@ -49,6 +50,12 @@ export default class Invoice extends BaseModel {
 
   @column()
   declare total: number
+
+  @column()
+  declare totalPaid: number
+
+  @column()
+  declare balanceDue: number
 
   @column()
   declare notes: string | null
@@ -101,10 +108,14 @@ export default class Invoice extends BaseModel {
   @hasMany(() => InvoiceItem)
   declare items: HasMany<typeof InvoiceItem>
 
+  @hasMany(() => InvoicePayment)
+  declare payments: HasMany<typeof InvoicePayment>
+
   // Computed: status label (Spanish)
   get statusLabel(): string {
     const labels: Record<string, string> = {
       pending: 'Pendiente',
+      partial: 'Pago Parcial',
       paid: 'Pagada',
       overdue: 'Vencida',
       voided: 'Anulada',
@@ -136,6 +147,11 @@ export default class Invoice extends BaseModel {
     if (this.status === 'paid' || this.status === 'voided') return false
     if (!this.dueDate) return false
     return DateTime.now() > this.dueDate
+  }
+
+  // Check if invoice can accept payments
+  get canAcceptPayments(): boolean {
+    return this.status === 'pending' || this.status === 'partial' || this.status === 'overdue'
   }
 
   // Check if invoice is editable (only pending invoices)
@@ -173,6 +189,8 @@ export default class Invoice extends BaseModel {
       tax_rate: Number(this.taxRate),
       tax_amount: Number(this.taxAmount),
       total: Number(this.total),
+      total_paid: Number(this.totalPaid || 0),
+      balance_due: Number(this.balanceDue || this.total),
       notes: this.notes,
       terms_conditions: this.termsConditions,
       payment_date: this.serializeDate(this.paymentDate),
@@ -182,6 +200,7 @@ export default class Invoice extends BaseModel {
       source_label: this.sourceLabel,
       is_overdue: this.isOverdue,
       is_editable: this.isEditable,
+      can_accept_payments: this.canAcceptPayments,
       // SRI fields
       access_key: this.accessKey,
       sri_status: this.sriStatus,

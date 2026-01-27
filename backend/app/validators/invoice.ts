@@ -58,11 +58,23 @@ export const convertFromQuoteValidator = vine.compile(
 )
 
 /**
- * Validator for marking invoice as paid
+ * Validator for marking invoice as paid (legacy - full payment)
  */
 export const markAsPaidValidator = vine.compile(
   vine.object({
     payment_method: vine.enum(['transfer', 'cash', 'card', 'other']),
     payment_notes: vine.string().optional(),
+  })
+)
+
+/**
+ * Validator for registering a payment (partial or full)
+ */
+export const registerPaymentValidator = vine.compile(
+  vine.object({
+    amount: vine.number().positive(),
+    payment_date: vine.string().optional(), // ISO date, defaults to today
+    payment_method: vine.enum(['transfer', 'cash', 'card', 'other']),
+    notes: vine.string().optional(),
   })
 )

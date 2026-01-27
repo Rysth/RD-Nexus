@@ -26,6 +26,18 @@ export interface InvoiceItem {
   sort_order?: number;
 }
 
+export interface InvoicePayment {
+  id: number;
+  invoice_id: number;
+  amount: number;
+  payment_date: string;
+  payment_method: "transfer" | "cash" | "card" | "other";
+  payment_method_label: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Invoice {
   id: number;
   client_id: number;
@@ -35,12 +47,14 @@ export interface Invoice {
   invoice_number: string;
   issue_date: string;
   due_date: string;
-  status: "pending" | "paid" | "overdue" | "voided";
+  status: "pending" | "partial" | "paid" | "overdue" | "voided";
   status_label: string;
   subtotal: number;
   tax_rate: number;
   tax_amount: number;
   total: number;
+  total_paid: number;
+  balance_due: number;
   notes: string | null;
   terms_conditions: string | null;
   payment_date: string | null;
@@ -50,6 +64,7 @@ export interface Invoice {
   source_label: string;
   is_overdue: boolean;
   is_editable: boolean;
+  can_accept_payments: boolean;
   // SRI fields (future)
   access_key: string | null;
   sri_status: string | null;
@@ -59,6 +74,7 @@ export interface Invoice {
   client?: Client;
   project?: Project;
   items?: InvoiceItem[];
+  payments?: InvoicePayment[];
   quote?: { id: number; quote_number: string; title?: string } | null;
   recurring_service?: { id: number; name: string } | null;
 }
@@ -66,6 +82,8 @@ export interface Invoice {
 export interface InvoiceStats {
   pending_count: number;
   pending_total: number;
+  partial_count: number;
+  partial_total: number;
   paid_count: number;
   paid_total: number;
   overdue_count: number;
@@ -117,6 +135,13 @@ interface MarkAsPaidData {
   payment_notes?: string;
 }
 
+interface RegisterPaymentData {
+  amount: number;
+  payment_date?: string;
+  payment_method: "transfer" | "cash" | "card" | "other";
+  notes?: string;
+}
+
 interface InvoiceState {
   invoices: Invoice[];
   currentInvoice: Invoice | null;
@@ -138,6 +163,8 @@ interface InvoiceState {
   deleteInvoice: (id: number) => Promise<void>;
   convertFromQuote: (quoteId: number, dueDays?: number) => Promise<Invoice>;
   markAsPaid: (id: number, data: MarkAsPaidData) => Promise<Invoice>;
+  registerPayment: (id: number, data: RegisterPaymentData) => Promise<Invoice>;
+  deletePayment: (invoiceId: number, paymentId: number) => Promise<Invoice>;
   voidInvoice: (id: number) => Promise<Invoice>;
   clearCurrentInvoice: () => void;
 }
@@ -301,6 +328,55 @@ export const useInvoiceStore = create<InvoiceState>((set) => ({
       const message =
         (error as ApiError).response?.data?.message ||
         "Error al marcar factura como pagada";
+      set({ error: message, invoicesLoading: false });
+      toast.error(message);
+      throw error;
+    }
+  },
+
+  registerPayment: async (id: number, data: RegisterPaymentData) => {
+    set({ invoicesLoading: true, error: null });
+    try {
+      const response = await api.post(`/api/v1/invoices/${id}/payments`, data);
+      const invoice = response.data.invoice;
+      set((state) => ({
+        invoices: state.invoices.map((inv) =>
+          inv.id === id ? invoice : inv
+        ),
+        currentInvoice:
+          state.currentInvoice?.id === id ? invoice : state.currentInvoice,
+        invoicesLoading: false,
+      }));
+      toast.success("Pago registrado exitosamente");
+      return invoice;
+    } catch (error) {
+      const message =
+        (error as ApiError).response?.data?.message ||
+        "Error al registrar pago";
+      set({ error: message, invoicesLoading: false });
+      toast.error(message);
+      throw error;
+    }
+  },
+
+  deletePayment: async (invoiceId: number, paymentId: number) => {
+    set({ invoicesLoading: true, error: null });
+    try {
+      const response = await api.delete(`/api/v1/invoices/${invoiceId}/payments/${paymentId}`);
+      set((state) => ({
+        invoices: state.invoices.map((inv) =>
+          inv.id === invoiceId ? response.data : inv
+        ),
+        currentInvoice:
+          state.currentInvoice?.id === invoiceId ? response.data : state.currentInvoice,
+        invoicesLoading: false,
+      }));
+      toast.success("Pago eliminado exitosamente");
+      return response.data;
+    } catch (error) {
+      const message =
+        (error as ApiError).response?.data?.message ||
+        "Error al eliminar pago";
       set({ error: message, invoicesLoading: false });
       toast.error(message);
       throw error;

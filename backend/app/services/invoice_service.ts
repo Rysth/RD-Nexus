@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import Invoice from '#models/invoice'
 import InvoiceItem from '#models/invoice_item'
+import InvoicePayment from '#models/invoice_payment'
 import Quote from '#models/quote'
 import RecurringService from '#models/recurring_service'
 
@@ -82,6 +83,8 @@ export default class InvoiceService {
           taxRate: quote.taxRate,
           taxAmount: quote.taxAmount,
           total: quote.total,
+          totalPaid: 0,
+          balanceDue: quote.total,
           notes: quote.notes,
         },
         { client: trx }
@@ -161,6 +164,8 @@ export default class InvoiceService {
           taxRate,
           taxAmount,
           total,
+          totalPaid: 0,
+          balanceDue: total,
           notes: service.description,
         },
         { client: trx }
@@ -194,7 +199,7 @@ export default class InvoiceService {
   }
 
   /**
-   * Mark invoice as paid
+   * Mark invoice as paid (legacy method - marks full payment)
    */
   async markAsPaid(
     invoiceId: number,
@@ -212,13 +217,146 @@ export default class InvoiceService {
       throw new Error('No se puede marcar como pagada una factura anulada')
     }
 
-    invoice.status = 'paid'
-    invoice.paymentDate = DateTime.now()
-    invoice.paymentMethod = paymentMethod
-    invoice.paymentNotes = paymentNotes || null
+    // Register the remaining balance as a single payment
+    const balanceDue = Number(invoice.balanceDue) || Number(invoice.total)
+    
+    await this.registerPayment(invoiceId, {
+      amount: balanceDue,
+      paymentDate: DateTime.now(),
+      paymentMethod,
+      notes: paymentNotes,
+    })
 
-    await invoice.save()
-    return invoice
+    // Reload and return the invoice
+    return await Invoice.findOrFail(invoiceId)
+  }
+
+  /**
+   * Register a payment (partial or full)
+   */
+  async registerPayment(
+    invoiceId: number,
+    data: {
+      amount: number
+      paymentDate: DateTime
+      paymentMethod: 'transfer' | 'cash' | 'card' | 'other'
+      notes?: string
+    }
+  ): Promise<{ invoice: Invoice; payment: InvoicePayment }> {
+    const invoice = await Invoice.findOrFail(invoiceId)
+
+    if (invoice.status === 'voided') {
+      throw new Error('No se puede registrar pago en una factura anulada')
+    }
+
+    if (invoice.status === 'paid') {
+      throw new Error('Esta factura ya está completamente pagada')
+    }
+
+    const currentBalance = Number(invoice.balanceDue) || Number(invoice.total)
+    const paymentAmount = Math.round(data.amount * 100) / 100
+
+    if (paymentAmount > currentBalance) {
+      throw new Error(`El monto del pago ($${paymentAmount}) excede el saldo pendiente ($${currentBalance})`)
+    }
+
+    return await db.transaction(async (trx) => {
+      // Create the payment record
+      const payment = await InvoicePayment.create(
+        {
+          invoiceId: invoice.id,
+          amount: paymentAmount,
+          paymentDate: data.paymentDate,
+          paymentMethod: data.paymentMethod,
+          notes: data.notes || null,
+        },
+        { client: trx }
+      )
+
+      // Update invoice totals
+      const newTotalPaid = Math.round((Number(invoice.totalPaid || 0) + paymentAmount) * 100) / 100
+      const newBalanceDue = Math.round((Number(invoice.total) - newTotalPaid) * 100) / 100
+
+      invoice.useTransaction(trx)
+      invoice.totalPaid = newTotalPaid
+      invoice.balanceDue = newBalanceDue
+
+      // Update status based on payment
+      if (newBalanceDue <= 0) {
+        invoice.status = 'paid'
+        invoice.paymentDate = data.paymentDate
+        invoice.paymentMethod = data.paymentMethod
+        invoice.paymentNotes = data.notes || null
+      } else if (newTotalPaid > 0) {
+        invoice.status = 'partial'
+        // Keep track of the last payment method
+        invoice.paymentMethod = data.paymentMethod
+      }
+
+      await invoice.save()
+
+      return { invoice, payment }
+    })
+  }
+
+  /**
+   * Delete a payment and recalculate invoice totals
+   */
+  async deletePayment(paymentId: number): Promise<Invoice> {
+    const payment = await InvoicePayment.query()
+      .where('id', paymentId)
+      .preload('invoice')
+      .firstOrFail()
+
+    const invoice = payment.invoice
+
+    if (invoice.status === 'voided') {
+      throw new Error('No se pueden modificar pagos de una factura anulada')
+    }
+
+    return await db.transaction(async (trx) => {
+      // Delete the payment
+      payment.useTransaction(trx)
+      await payment.delete()
+
+      // Recalculate totals
+      const remainingPayments = await InvoicePayment.query({ client: trx })
+        .where('invoice_id', invoice.id)
+        .orderBy('payment_date', 'desc')
+
+      const newTotalPaid = remainingPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+      const newBalanceDue = Math.round((Number(invoice.total) - newTotalPaid) * 100) / 100
+
+      invoice.useTransaction(trx)
+      invoice.totalPaid = Math.round(newTotalPaid * 100) / 100
+      invoice.balanceDue = newBalanceDue
+
+      // Update status
+      if (newTotalPaid <= 0) {
+        invoice.status = 'pending'
+        invoice.paymentDate = null
+        invoice.paymentMethod = null
+        invoice.paymentNotes = null
+      } else if (newBalanceDue > 0) {
+        invoice.status = 'partial'
+        // Update payment info from last payment
+        if (remainingPayments.length > 0) {
+          invoice.paymentMethod = remainingPayments[0].paymentMethod
+        }
+      }
+
+      await invoice.save()
+      return invoice
+    })
+  }
+
+  /**
+   * Get all payments for an invoice
+   */
+  async getPayments(invoiceId: number): Promise<InvoicePayment[]> {
+    return await InvoicePayment.query()
+      .where('invoice_id', invoiceId)
+      .orderBy('payment_date', 'desc')
   }
 
   /**
