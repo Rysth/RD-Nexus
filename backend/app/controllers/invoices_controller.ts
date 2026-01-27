@@ -82,7 +82,7 @@ export default class InvoicesController {
         }
 
         // Filter by status
-        if (status && ['pending', 'paid', 'overdue', 'voided'].includes(status)) {
+        if (status && ['pending', 'partial', 'paid', 'overdue', 'voided'].includes(status)) {
           query = query.where('status', status)
         }
 
