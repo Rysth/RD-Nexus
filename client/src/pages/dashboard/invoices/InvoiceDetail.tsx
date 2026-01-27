@@ -1,7 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useInvoiceStore, type InvoicePayment } from "@/stores/invoiceStore";
+import {
+  useInvoiceStore,
+  type Invoice,
+  type InvoicePayment,
+} from "@/stores/invoiceStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +127,14 @@ export default function InvoiceDetail() {
   >("transfer");
   const [paymentNotes, setPaymentNotes] = useState("");
 
+  const getBalanceDueForPayment = (invoice?: Invoice | null) => {
+    if (!invoice) return 0;
+    const balance = Number(invoice.balance_due);
+    if (balance > 0) return balance;
+    const fallback = Number(invoice.total) - Number(invoice.total_paid || 0);
+    return Math.max(0, fallback);
+  };
+
   useEffect(() => {
     if (id) {
       fetchInvoice(parseInt(id));
@@ -142,9 +154,8 @@ export default function InvoiceDetail() {
           currentInvoice?.status || "",
         ))
     ) {
-      setPaymentAmount(
-        String(currentInvoice.balance_due || currentInvoice.total),
-      );
+      const balance = getBalanceDueForPayment(currentInvoice);
+      setPaymentAmount(String(balance || currentInvoice?.total || 0));
       setPayDialogOpen(true);
     }
   }, [searchParams, currentInvoice]);
@@ -208,9 +219,8 @@ export default function InvoiceDetail() {
   };
 
   const openPayDialog = () => {
-    setPaymentAmount(
-      String(currentInvoice?.balance_due || currentInvoice?.total || 0),
-    );
+    const balance = getBalanceDueForPayment(currentInvoice);
+    setPaymentAmount(String(balance || currentInvoice?.total || 0));
     setPayDialogOpen(true);
   };
 
@@ -243,6 +253,8 @@ export default function InvoiceDetail() {
   const canAcceptPayments =
     currentInvoice.can_accept_payments ??
     ["pending", "partial", "overdue"].includes(currentInvoice.status);
+
+  const balanceDueForPayment = getBalanceDueForPayment(currentInvoice);
 
   return (
     <div className="space-y-6">
@@ -813,13 +825,13 @@ export default function InvoiceDetail() {
                 type="number"
                 step="0.01"
                 min="0.01"
-                max={currentInvoice.balance_due}
+                max={balanceDueForPayment}
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                placeholder={`Máximo: ${formatCurrency(currentInvoice.balance_due)}`}
+                placeholder={`Máximo: ${formatCurrency(balanceDueForPayment)}`}
               />
               <p className="text-xs text-muted-foreground">
-                Saldo pendiente: {formatCurrency(currentInvoice.balance_due)}
+                Saldo pendiente: {formatCurrency(balanceDueForPayment)}
               </p>
             </div>
             <div className="space-y-2">
@@ -870,18 +882,15 @@ export default function InvoiceDetail() {
                   <span>Saldo restante:</span>
                   <span
                     className={
-                      currentInvoice.balance_due - Number(paymentAmount) <= 0
+                      balanceDueForPayment - Number(paymentAmount) <= 0
                         ? "text-green-600 font-medium"
                         : ""
                     }
                   >
                     {formatCurrency(
-                      Math.max(
-                        0,
-                        currentInvoice.balance_due - Number(paymentAmount),
-                      ),
+                      Math.max(0, balanceDueForPayment - Number(paymentAmount)),
                     )}
-                    {currentInvoice.balance_due - Number(paymentAmount) <= 0 &&
+                    {balanceDueForPayment - Number(paymentAmount) <= 0 &&
                       " (Pagado completo)"}
                   </span>
                 </div>
@@ -897,7 +906,7 @@ export default function InvoiceDetail() {
               disabled={
                 !paymentAmount ||
                 Number(paymentAmount) <= 0 ||
-                Number(paymentAmount) > currentInvoice.balance_due
+                Number(paymentAmount) > balanceDueForPayment
               }
             >
               <CheckCircle className="mr-2 h-4 w-4" />
