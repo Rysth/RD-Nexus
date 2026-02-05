@@ -227,8 +227,7 @@ export default function InvoiceForm() {
           return Number.isFinite(num) ? num : 15;
         })(),
         notes: currentInvoice.notes || "",
-        terms_conditions:
-          currentInvoice.terms_conditions || DEFAULT_TERMS_CONDITIONS,
+        terms_conditions: currentInvoice.terms_conditions || "",
         items:
           currentInvoice.items?.map((item: InvoiceItem) => ({
             description: item.description,
