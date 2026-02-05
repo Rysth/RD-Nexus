@@ -261,6 +261,7 @@ export default class InvoicesController {
         invoice.notes = data.notes || null
       }
       if (data.terms_conditions !== undefined) {
+        // If empty string, set to null
         invoice.termsConditions = data.terms_conditions || null
       }
 
