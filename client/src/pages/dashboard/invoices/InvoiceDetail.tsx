@@ -569,6 +569,16 @@ export default function InvoiceDetail() {
                           </p>
                         </div>
                         <div className="text-center">
+                          <p className="text-muted-foreground text-xs">
+                            Desc. %
+                          </p>
+                          <p className="font-medium">
+                            {(item.discount_percent ?? 0) > 0
+                              ? `${item.discount_percent}%`
+                              : "-"}
+                          </p>
+                        </div>
+                        <div className="text-center">
                           <p className="text-muted-foreground text-xs">Tipo</p>
                           <p className="font-medium capitalize">
                             {item.payment_type === "mensual"

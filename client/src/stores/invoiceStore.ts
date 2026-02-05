@@ -20,6 +20,7 @@ export interface InvoiceItem {
   description: string;
   quantity: number;
   unit_price: number;
+  discount_percent: number;
   subtotal: number;
   payment_type?: 'unico' | 'anual' | 'mensual';
   notes?: string | null;

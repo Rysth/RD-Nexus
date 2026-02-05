@@ -168,6 +168,7 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
                 <th className="col-desc">Descripción</th>
                 <th className="col-qty">Cantidad</th>
                 <th className="col-price">P. Unitario</th>
+                <th className="col-discount">Desc. %</th>
                 <th className="col-type">Tipo</th>
                 <th className="col-subtotal">Total</th>
               </tr>
@@ -181,6 +182,7 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
                     : item.payment_type === "anual"
                       ? "Anual"
                       : "Único";
+                const discountPercent = item.discount_percent ?? 0;
                 return (
                   <tr key={item.id || index}>
                     <td className="col-desc">
@@ -200,6 +202,9 @@ const QuotePrintTemplate = forwardRef<HTMLDivElement, QuotePrintTemplateProps>(
                     <td className="col-qty">{item.quantity}</td>
                     <td className="col-price">
                       {formatCurrency(item.unit_price)}
+                    </td>
+                    <td className="col-discount">
+                      {discountPercent > 0 ? `${discountPercent}%` : "-"}
                     </td>
                     <td className="col-type">{paymentTypeLabel}</td>
                     <td className="col-subtotal">

@@ -356,20 +356,21 @@ layer(base);
 }
 
 .quote-table .col-desc {
-  width: 45%;
+  width: 40%;
   text-align: left;
 }
 
 .quote-table .col-qty,
 .quote-table .col-price,
+.quote-table .col-discount,
 .quote-table .col-subtotal {
   text-align: right;
-  width: 12%;
+  width: 10%;
 }
 
 .quote-table .col-type {
   text-align: center;
-  width: 12%;
+  width: 10%;
 }
 
 .quote-table .col-iva {
