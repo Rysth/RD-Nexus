@@ -109,6 +109,7 @@ interface CreateInvoiceItemData {
   description: string;
   quantity: number;
   unit_price: number;
+  discount_percent?: number;
   payment_type?: 'unico' | 'anual' | 'mensual';
   notes?: string;
 }
@@ -120,6 +121,7 @@ interface CreateInvoiceData {
   due_date: string;
   tax_rate?: number;
   notes?: string | null;
+  terms_conditions?: string | null;
   items: CreateInvoiceItemData[];
 }
 
@@ -128,6 +130,7 @@ interface UpdateInvoiceData {
   due_date?: string;
   tax_rate?: number;
   notes?: string | null;
+  terms_conditions?: string | null;
   items?: CreateInvoiceItemData[];
 }
 
