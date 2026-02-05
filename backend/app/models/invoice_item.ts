@@ -20,6 +20,9 @@ export default class InvoiceItem extends BaseModel {
   declare unitPrice: number
 
   @column()
+  declare discountPercent: number
+
+  @column()
   declare subtotal: number
 
   @column()
@@ -49,6 +52,7 @@ export default class InvoiceItem extends BaseModel {
       description: this.description,
       quantity: Number(this.quantity),
       unit_price: Number(this.unitPrice),
+      discount_percent: Number(this.discountPercent) || 0,
       subtotal: Number(this.subtotal),
       payment_type: this.paymentType || 'unico',
       notes: this.notes,

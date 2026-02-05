@@ -98,7 +98,10 @@ export default class InvoiceService {
             description: quoteItem.description,
             quantity: quoteItem.quantity,
             unitPrice: quoteItem.unitPrice,
+            discountPercent: quoteItem.discountPercent ?? 0,
             subtotal: quoteItem.subtotal,
+            paymentType: quoteItem.paymentType || 'unico',
+            notes: quoteItem.notes || null,
             sortOrder: index,
           },
           { client: trx }

@@ -17,6 +17,7 @@ export const createInvoiceValidator = vine.compile(
         description: vine.string().minLength(1),
         quantity: vine.number().min(0.01),
         unit_price: vine.number().min(0),
+        discount_percent: vine.number().min(0).max(100).optional(),
         payment_type: vine.enum(['unico', 'anual', 'mensual']).optional(),
         notes: vine.string().optional(),
       })
@@ -40,6 +41,7 @@ export const updateInvoiceValidator = vine.compile(
         description: vine.string().minLength(1),
         quantity: vine.number().min(0.01),
         unit_price: vine.number().min(0),
+        discount_percent: vine.number().min(0).max(100).optional(),
         payment_type: vine.enum(['unico', 'anual', 'mensual']).optional(),
         notes: vine.string().optional(),
       })

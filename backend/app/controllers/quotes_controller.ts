@@ -21,6 +21,7 @@ const quoteItemSchema = vine.object({
   description: vine.string().trim().minLength(1).maxLength(500),
   quantity: vine.number().positive(),
   unit_price: vine.number().min(0),
+  discount_percent: vine.number().min(0).max(100).optional(),
   payment_type: vine.enum(['unico', 'anual', 'mensual']).optional(),
   notes: vine.string().trim().maxLength(2000).nullable().optional(),
 })
@@ -85,9 +86,11 @@ export default class QuotesController {
   /**
    * Calculate totals from items
    */
-  private calculateTotals(items: { quantity: number; unit_price: number }[], taxRate: number, discountPercent: number = 0) {
+  private calculateTotals(items: { quantity: number; unit_price: number; discount_percent?: number }[], taxRate: number, discountPercent: number = 0) {
     const subtotal = items.reduce((acc, item) => {
-      return acc + item.quantity * item.unit_price
+      const gross = item.quantity * item.unit_price
+      const itemDiscount = gross * ((item.discount_percent || 0) / 100)
+      return acc + (gross - itemDiscount)
     }, 0)
 
     const discountAmount = subtotal * (discountPercent / 100)
@@ -269,7 +272,9 @@ export default class QuotesController {
       // Create items
       for (let i = 0; i < data.items.length; i++) {
         const item = data.items[i]
-        const itemSubtotal = item.quantity * item.unit_price
+        const itemDiscountPercent = item.discount_percent ?? 0
+        const gross = item.quantity * item.unit_price
+        const itemSubtotal = gross - (gross * (itemDiscountPercent / 100))
 
         await QuoteItem.create(
           {
@@ -277,6 +282,7 @@ export default class QuotesController {
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unit_price,
+            discountPercent: itemDiscountPercent,
             subtotal: Math.round(itemSubtotal * 100) / 100,
             paymentType: item.payment_type || 'unico',
             notes: item.notes || null,
@@ -382,7 +388,9 @@ export default class QuotesController {
         // Create new items
         for (let i = 0; i < data.items.length; i++) {
           const item = data.items[i]
-          const itemSubtotal = item.quantity * item.unit_price
+          const itemDiscountPercent = item.discount_percent ?? 0
+          const gross = item.quantity * item.unit_price
+          const itemSubtotal = gross - (gross * (itemDiscountPercent / 100))
 
           await QuoteItem.create(
             {
@@ -390,6 +398,7 @@ export default class QuotesController {
               description: item.description,
               quantity: item.quantity,
               unitPrice: item.unit_price,
+              discountPercent: itemDiscountPercent,
               subtotal: Math.round(itemSubtotal * 100) / 100,
               paymentType: item.payment_type || 'unico',
               notes: item.notes || null,

@@ -25,9 +25,11 @@ export default class InvoicesController {
   /**
    * Calculate totals from items
    */
-  private calculateTotals(items: { quantity: number; unit_price: number }[], taxRate: number) {
+  private calculateTotals(items: { quantity: number; unit_price: number; discount_percent?: number }[], taxRate: number) {
     const subtotal = items.reduce((acc, item) => {
-      return acc + item.quantity * item.unit_price
+      const gross = item.quantity * item.unit_price
+      const itemDiscount = gross * ((item.discount_percent || 0) / 100)
+      return acc + (gross - itemDiscount)
     }, 0)
 
     const taxAmount = subtotal * (taxRate / 100)
@@ -189,13 +191,16 @@ export default class InvoicesController {
 
       // Create items
       for (const [index, itemData] of data.items.entries()) {
-        const itemSubtotal = itemData.quantity * itemData.unit_price
+        const itemDiscountPercent = itemData.discount_percent ?? 0
+        const gross = itemData.quantity * itemData.unit_price
+        const itemSubtotal = gross - (gross * (itemDiscountPercent / 100))
         await InvoiceItem.create(
           {
             invoiceId: newInvoice.id,
             description: itemData.description,
             quantity: itemData.quantity,
             unitPrice: itemData.unit_price,
+            discountPercent: itemDiscountPercent,
             subtotal: Math.round(itemSubtotal * 100) / 100,
             paymentType: itemData.payment_type || 'unico',
             notes: itemData.notes || null,
@@ -266,13 +271,16 @@ export default class InvoicesController {
 
         // Create new items
         for (const [index, itemData] of data.items.entries()) {
-          const itemSubtotal = itemData.quantity * itemData.unit_price
+          const itemDiscountPercent = itemData.discount_percent ?? 0
+          const gross = itemData.quantity * itemData.unit_price
+          const itemSubtotal = gross - (gross * (itemDiscountPercent / 100))
           await InvoiceItem.create(
             {
               invoiceId: invoice.id,
               description: itemData.description,
               quantity: itemData.quantity,
               unitPrice: itemData.unit_price,
+              discountPercent: itemDiscountPercent,
               subtotal: Math.round(itemSubtotal * 100) / 100,
               paymentType: itemData.payment_type || 'unico',
               notes: itemData.notes || null,
