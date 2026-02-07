@@ -26,6 +26,65 @@ export default class Business extends BaseModel {
   @column()
   declare tiktok: string | null
 
+  // ========================================
+  // SRI - Datos del Emisor
+  // ========================================
+
+  @column()
+  declare ruc: string | null
+
+  @column()
+  declare razonSocial: string | null
+
+  @column()
+  declare nombreComercial: string | null
+
+  @column()
+  declare direccionMatriz: string | null
+
+  @column()
+  declare direccionEstablecimiento: string | null
+
+  // ========================================
+  // SRI - Configuración de Facturación
+  // ========================================
+
+  @column()
+  declare codigoEstablecimiento: string
+
+  @column()
+  declare puntoEmision: string
+
+  // ========================================
+  // SRI - Régimen Tributario
+  // ========================================
+
+  @column()
+  declare obligadoContabilidad: 'SI' | 'NO'
+
+  @column()
+  declare contribuyenteEspecial: string | null
+
+  @column()
+  declare regimenRimpe: string | null
+
+  // ========================================
+  // SRI - Configuración de Ambiente
+  // ========================================
+
+  @column()
+  declare sriAmbiente: '1' | '2'
+
+  @column()
+  declare sriCertificatePath: string | null
+
+  // ========================================
+  // SRI - Secuencial de Facturación
+  // ========================================
+
+  @column()
+  declare ultimoSecuencialFactura: number
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -44,6 +103,12 @@ export default class Business extends BaseModel {
         instagram: '',
         facebook: '',
         tiktok: '',
+        // SRI defaults
+        codigoEstablecimiento: '001',
+        puntoEmision: '001',
+        obligadoContabilidad: 'NO',
+        sriAmbiente: '1',
+        ultimoSecuencialFactura: 0,
       })
     }
     
@@ -61,9 +126,49 @@ export default class Business extends BaseModel {
       instagram: this.instagram,
       facebook: this.facebook,
       tiktok: this.tiktok,
+      // SRI fields
+      ruc: this.ruc,
+      razon_social: this.razonSocial,
+      nombre_comercial: this.nombreComercial,
+      direccion_matriz: this.direccionMatriz,
+      direccion_establecimiento: this.direccionEstablecimiento,
+      codigo_establecimiento: this.codigoEstablecimiento,
+      punto_emision: this.puntoEmision,
+      obligado_contabilidad: this.obligadoContabilidad,
+      contribuyente_especial: this.contribuyenteEspecial,
+      regimen_rimpe: this.regimenRimpe,
+      sri_ambiente: this.sriAmbiente,
+      sri_ambiente_label: this.sriAmbiente === '1' ? 'Pruebas' : 'Producción',
+      sri_certificate_configured: !!this.sriCertificatePath,
+      ultimo_secuencial_factura: this.ultimoSecuencialFactura,
+      sri_configured: this.isSriConfigured,
       created_at: this.createdAt?.toISO(),
       updated_at: this.updatedAt?.toISO(),
     }
+  }
+
+  // Check if SRI is properly configured
+  get isSriConfigured(): boolean {
+    return !!(
+      this.ruc &&
+      this.razonSocial &&
+      this.direccionMatriz &&
+      this.codigoEstablecimiento &&
+      this.puntoEmision
+    )
+  }
+
+  // Get formatted serie for SRI (establecimiento-puntoEmision)
+  get sriSerie(): string {
+    return `${this.codigoEstablecimiento || '001'}-${this.puntoEmision || '001'}`
+  }
+
+  // Get next sequential number for invoice
+  async getNextSecuencial(): Promise<string> {
+    const next = (this.ultimoSecuencialFactura || 0) + 1
+    this.ultimoSecuencialFactura = next
+    await this.save()
+    return String(next).padStart(9, '0')
   }
 
   // Get name or default

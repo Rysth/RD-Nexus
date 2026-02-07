@@ -162,8 +162,16 @@ const apiV1 = router
             router.get('/:id/payments', [InvoicesController, 'getPayments'])
             router.post('/:id/payments', [InvoicesController, 'registerPayment']).use(sensitiveThrottle)
             router.delete('/:id/payments/:paymentId', [InvoicesController, 'deletePayment']).use(sensitiveThrottle)
+            // SRI Ecuador - Electronic Billing
+            router.post('/:id/sri/process', [InvoicesController, 'processSri']).use(sensitiveThrottle)
+            router.get('/:id/sri/status', [InvoicesController, 'checkSriStatus'])
+            router.get('/:id/sri/xml', [InvoicesController, 'downloadSriXml'])
+            router.post('/:id/sri/generate-xml', [InvoicesController, 'generateSriXml'])
           })
           .prefix('/invoices')
+
+        // SRI Configuration endpoint
+        router.get('/sri/config', [InvoicesController, 'getSriConfig'])
       })
       .use(middleware.auth())
   })

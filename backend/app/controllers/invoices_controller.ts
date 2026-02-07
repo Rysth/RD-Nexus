@@ -567,4 +567,196 @@ export default class InvoicesController {
       })
     }
   }
+
+  // ========================================
+  // SRI Ecuador - Electronic Billing
+  // ========================================
+
+  /**
+   * POST /api/v1/invoices/:id/sri/process
+   * Process an invoice through SRI electronic billing
+   */
+  async processSri({ params, response }: HttpContext) {
+    try {
+      const SriService = (await import('#services/sri_service')).default
+      const sriService = await SriService.fromBusiness()
+
+      // Validate SRI configuration
+      const validation = sriService.validateConfig()
+      if (!validation.valid) {
+        return response.badRequest({
+          message: 'Configuración SRI incompleta',
+          errors: validation.errors,
+        })
+      }
+
+      // Load invoice with relations
+      const invoice = await Invoice.query()
+        .where('id', params.id)
+        .preload('client')
+        .preload('items')
+        .firstOrFail()
+
+      // Check if already processed
+      if (invoice.sriStatus === 'authorized') {
+        return response.badRequest({
+          message: 'Esta factura ya está autorizada por el SRI',
+          access_key: invoice.accessKey,
+        })
+      }
+
+      // Process through SRI
+      const result = await sriService.processInvoice(invoice)
+
+      // Invalidate cache
+      await CacheService.deleteMatched('invoices:*')
+
+      if (result.success) {
+        return response.ok({
+          message: 'Factura autorizada por el SRI',
+          access_key: result.accessKey,
+          status: result.status,
+          invoice: invoice.serializeForApi(),
+        })
+      } else {
+        return response.ok({
+          message: 'Factura enviada al SRI pero pendiente de autorización',
+          access_key: result.accessKey,
+          status: result.status,
+          sri_messages: result.messages,
+          invoice: invoice.serializeForApi(),
+        })
+      }
+    } catch (error) {
+      return response.internalServerError({
+        message: 'Error al procesar factura en SRI',
+        error: (error as Error).message,
+      })
+    }
+  }
+
+  /**
+   * GET /api/v1/invoices/:id/sri/status
+   * Check SRI authorization status for an invoice
+   */
+  async checkSriStatus({ params, response }: HttpContext) {
+    try {
+      const invoice = await Invoice.findOrFail(params.id)
+
+      if (!invoice.accessKey) {
+        return response.badRequest({
+          message: 'Esta factura no ha sido enviada al SRI',
+        })
+      }
+
+      const SriService = (await import('#services/sri_service')).default
+      const sriService = await SriService.fromBusiness()
+
+      const result = await sriService.authorize(invoice.accessKey)
+
+      // Update invoice if now authorized
+      if (result.success && invoice.sriStatus !== 'authorized') {
+        invoice.sriStatus = 'authorized'
+        invoice.authorizationDate = result.fechaAutorizacion
+          ? DateTime.fromFormat(result.fechaAutorizacion, 'dd/MM/yyyy HH:mm:ss')
+          : DateTime.now()
+        await invoice.save()
+        await CacheService.deleteMatched('invoices:*')
+      }
+
+      return response.ok({
+        access_key: invoice.accessKey,
+        status: invoice.sriStatus,
+        authorization_date: invoice.authorizationDate?.toISO(),
+        sri_response: result,
+      })
+    } catch (error) {
+      return response.internalServerError({
+        message: 'Error al consultar estado en SRI',
+        error: (error as Error).message,
+      })
+    }
+  }
+
+  /**
+   * GET /api/v1/invoices/:id/sri/xml
+   * Download signed XML for an invoice
+   */
+  async downloadSriXml({ params, response }: HttpContext) {
+    const invoice = await Invoice.findOrFail(params.id)
+
+    if (!invoice.xmlContent) {
+      return response.badRequest({
+        message: 'Esta factura no tiene XML firmado',
+      })
+    }
+
+    response.header('Content-Type', 'application/xml')
+    response.header('Content-Disposition', `attachment; filename="factura-${invoice.accessKey || invoice.invoiceNumber}.xml"`)
+
+    return response.send(invoice.xmlContent)
+  }
+
+  /**
+   * POST /api/v1/invoices/:id/sri/generate-xml
+   * Generate XML without sending to SRI (for testing)
+   */
+  async generateSriXml({ params, response }: HttpContext) {
+    try {
+      const SriService = (await import('#services/sri_service')).default
+      const sriService = await SriService.fromBusiness()
+
+      const invoice = await Invoice.query()
+        .where('id', params.id)
+        .preload('client')
+        .preload('items')
+        .firstOrFail()
+
+      const accessKey = sriService.generateAccessKey(invoice)
+      const xml = await sriService.generateXml(invoice, accessKey)
+
+      return response.ok({
+        access_key: accessKey,
+        xml: xml,
+        message: 'XML generado (sin firmar ni enviar)',
+      })
+    } catch (error) {
+      return response.internalServerError({
+        message: 'Error al generar XML',
+        error: (error as Error).message,
+      })
+    }
+  }
+
+  /**
+   * GET /api/v1/sri/config
+   * Get current SRI configuration status
+   */
+  async getSriConfig({ response }: HttpContext) {
+    try {
+      const SriService = (await import('#services/sri_service')).default
+      const sriService = await SriService.fromBusiness()
+      const validation = sriService.validateConfig()
+
+      const Business = (await import('#models/business')).default
+      const business = await Business.current()
+
+      return response.ok({
+        configured: validation.valid,
+        errors: validation.errors,
+        environment: business.sriAmbiente === '1' ? 'Pruebas' : 'Producción',
+        ruc: business.ruc,
+        razon_social: business.razonSocial,
+        nombre_comercial: business.nombreComercial,
+        serie: business.sriSerie,
+        ultimo_secuencial: business.ultimoSecuencialFactura,
+      })
+    } catch (error) {
+      return response.internalServerError({
+        message: 'Error al obtener configuración SRI',
+        error: (error as Error).message,
+      })
+    }
+  }
 }
+

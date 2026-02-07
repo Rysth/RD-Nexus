@@ -85,5 +85,23 @@ export default await Env.create(new URL('../', import.meta.url), {
   R2_BUCKET: Env.schema.string.optional(),
   R2_ENDPOINT: Env.schema.string.optional(),
   R2_CDN_URL: Env.schema.string.optional(),
-  REDIS_QUEUE: Env.schema.string.optional()
+  REDIS_QUEUE: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for SRI Ecuador - Electronic Billing
+  |----------------------------------------------------------
+  */
+  SRI_ENVIRONMENT: Env.schema.enum(['1', '2'] as const).optional(),
+  SRI_CERTIFICATE_PATH: Env.schema.string.optional(),
+  SRI_CERTIFICATE_PASSWORD: Env.schema.string.optional(),
+  SRI_RUC: Env.schema.string.optional(),
+  SRI_RAZON_SOCIAL: Env.schema.string.optional(),
+  SRI_NOMBRE_COMERCIAL: Env.schema.string.optional(),
+  SRI_DIRECCION_MATRIZ: Env.schema.string.optional(),
+  SRI_CODIGO_ESTABLECIMIENTO: Env.schema.string.optional(),
+  SRI_PUNTO_EMISION: Env.schema.string.optional(),
+  SRI_OBLIGADO_CONTABILIDAD: Env.schema.enum(['SI', 'NO'] as const).optional(),
+  SRI_CONTRIBUYENTE_ESPECIAL: Env.schema.string.optional(),
+  SRI_REGIMEN_RIMPE: Env.schema.string.optional(),
 })
